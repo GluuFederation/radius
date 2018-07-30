@@ -1,7 +1,7 @@
 package org.xdi.radius;
 
 
-public class Server {
+public class ServerTest {
 	
 
 }
