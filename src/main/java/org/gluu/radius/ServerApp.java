@@ -1,4 +1,4 @@
-package org.xdi.radius;
+package org.gluu.radius;
 
 
 public class ServerApp {
