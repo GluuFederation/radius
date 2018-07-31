@@ -1,4 +1,4 @@
-package org.xdi.radius.server;
+package org.gluu.radius.server;
 
 
 public interface AccountingRequestContext extends RequestContext {
