@@ -26,7 +26,8 @@ public class GluuRadiusServer {
 		@Override
 		public String getSharedSecret(InetSocketAddress client) {
 
-			return null;
+			String clientip = client.getAddress().getHostAddress();
+			return ssprovider.getSharedSecret(clientip);
 		}
 
 
@@ -102,6 +103,7 @@ public class GluuRadiusServer {
 
 
 	public GluuRadiusServer start() {
+
 		// tinyradius does not provide any error reporting 
 		// mechanism when this method fails , except through 
 		// logging

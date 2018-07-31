@@ -1,11 +1,7 @@
-package org.gluu.radius;
+package org.gluu.radius.config;
 
 
 public interface ConfigurationProvider {
-	public Integer getAccountingPort();
-	public Integer getAuthenticationPort();
-	public String  getSharedSecret(String ipaddress);
-	public String  getListenAddress();
-	public Boolean authenticationListeningEnabled();
-	public Boolean accountingListeningEnabled();
+	public LdapConfiguration getLdapConfiguration();
+	public RadiusServerConfiguration getRadiusServerConfiguration();
 }
