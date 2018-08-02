@@ -6,5 +6,6 @@ public enum AccountingStatusType {
 	ACCOUNTING_ON,
 	INTERIM_UPDATE,
 	START,
-	STOP;
+	STOP,
+	UNKNOWN_STATUS
 }
