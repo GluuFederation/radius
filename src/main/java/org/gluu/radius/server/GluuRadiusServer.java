@@ -7,64 +7,30 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.tinyradius.packet.AccessRequest;
-import org.tinyradius.packet.AccountingRequest;
-import org.tinyradius.packet.RadiusPacket;
-import org.tinyradius.util.RadiusServer;
+import org.gluu.radius.server.AccessRequestContext;
+import org.gluu.radius.server.AccountingRequestFilter;
+import org.gluu.radius.server.impl.TinyRadiusServer;
 
 public class GluuRadiusServer {
 	
-
-	private class TinyRadiusServerWrapper extends RadiusServer {
-		
-		@Override
-		public String getUserPassword(String username) {
-
-			return null;
-		}
-
-		@Override
-		public String getSharedSecret(InetSocketAddress client) {
-
-			String clientip = client.getAddress().getHostAddress();
-			return ssprovider.getSharedSecret(clientip);
-		}
-
-
-		@Override
-		public RadiusPacket accessRequestReceived(AccessRequest request,InetSocketAddress client) {
-
-			//TODO implement this
-			return null;
-		}
-
-		@Override
-		public RadiusPacket accountingRequestReceived(AccountingRequest request,InetSocketAddress client) {
-
-			//TODO implement this
-			return null;
-		}
-	}
-
-	
-	private TinyRadiusServerWrapper tswrapper;
+	private TinyRadiusServer serverimpl;
 	private SharedSecretProvider ssprovider;
 	private List<AccessRequestFilter> accessfilters;
 	private List<AccountingRequestFilter> accountingfilters;
 
 	public GluuRadiusServer() {
 
-		tswrapper = new TinyRadiusServerWrapper();
-		this.ssprovider = null;
-		this.accessfilters = new ArrayList<AccessRequestFilter>();
-		this.accountingfilters = new ArrayList<AccountingRequestFilter>();
+		serverimpl = new TinyRadiusServer(this);
+		ssprovider = null;
+		accessfilters = new ArrayList<AccessRequestFilter>();
+		accountingfilters = new ArrayList<AccountingRequestFilter>();
 	}
 
 
 	public GluuRadiusServer setAccountingPort(Integer port) {
 
 		try {
-			tswrapper.setAcctPort(port);
+			serverimpl.setAcctPort(port);
 		}catch(IllegalArgumentException ie) {
 			throw new GluuRadiusException("Invalid accounting port value specified",ie);
 		}
@@ -74,7 +40,7 @@ public class GluuRadiusServer {
 	public GluuRadiusServer setAuthenticationPort(Integer port) {
 
 		try {
-			tswrapper.setAuthPort(port);
+			serverimpl.setAuthPort(port);
 		}catch(IllegalArgumentException ie) {
 			throw new GluuRadiusException("Invalid authentication port value specified",ie);
 		}
@@ -85,7 +51,7 @@ public class GluuRadiusServer {
 	public GluuRadiusServer setListenAddress(String hostname) {
 
 		try {
-			tswrapper.setListenAddress(InetAddress.getByName(hostname));
+			serverimpl.setListenAddress(InetAddress.getByName(hostname));
 		}catch(UnknownHostException ue) {
 			throw new GluuRadiusException("Hostname resolution failed for listen address",ue);
 		}catch(SecurityException se) {
@@ -101,24 +67,53 @@ public class GluuRadiusServer {
 		return this;
 	}
 
+	public String getSharedSecret(String ipaddress) {
+
+		return ssprovider.getSharedSecret(ipaddress);
+	}
+
 
 	public GluuRadiusServer start() {
 
-		// tinyradius does not provide any error reporting 
-		// mechanism when this method fails , except through 
-		// logging
-		tswrapper.start(true,true);
+		serverimpl.start(true,true);
 		return this;
 	}
 
 	public GluuRadiusServer stop() {
 
-		// tinyradius does not provide any error reporting 
-		// mechanism when this method fails, except through 
-		// logging 
-		tswrapper. stop();
+		serverimpl.stop();
 		return this;
 	}
 
-	
+
+	public GluuRadiusServer addAccessRequestFilter(AccessRequestFilter filter) {
+
+		accessfilters.add(filter);
+		return this;
+	}
+
+	public boolean processAccessRequest(AccessRequestContext context) {
+
+		boolean ret = false;
+		for(AccessRequestFilter filter : accessfilters) {
+			if(filter.processAccessRequest(context) == true) {
+				ret = true;
+				break;
+			}
+		}
+		return ret;
+	}
+
+	public void processAccountingRequest(AccountingRequestContext context) {
+
+		for(AccountingRequestFilter filter : accountingfilters) {
+			filter.processAccountingRequest(context);
+		}
+	}
+
+	public GluuRadiusServer addAccountingRequestFilter(AccountingRequestFilter filter) {
+
+		accountingfilters.add(filter);	
+		return this;
+	}
 }
