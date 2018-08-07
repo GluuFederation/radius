@@ -32,7 +32,7 @@ public class GluuRadiusServer {
 		try {
 			serverimpl.setAcctPort(port);
 		}catch(IllegalArgumentException ie) {
-			throw new GluuRadiusException("Invalid accounting port value specified",ie);
+			throw new GluuRadiusServerException("Invalid accounting port value specified",ie);
 		}
 		return this;
 	}
@@ -42,7 +42,7 @@ public class GluuRadiusServer {
 		try {
 			serverimpl.setAuthPort(port);
 		}catch(IllegalArgumentException ie) {
-			throw new GluuRadiusException("Invalid authentication port value specified",ie);
+			throw new GluuRadiusServerException("Invalid authentication port value specified",ie);
 		}
 		return this;
 	}
@@ -53,9 +53,9 @@ public class GluuRadiusServer {
 		try {
 			serverimpl.setListenAddress(InetAddress.getByName(hostname));
 		}catch(UnknownHostException ue) {
-			throw new GluuRadiusException("Hostname resolution failed for listen address",ue);
+			throw new GluuRadiusServerException("Hostname resolution failed for listen address",ue);
 		}catch(SecurityException se) {
-			throw new GluuRadiusException("Operation not allowed due to security restrictions",se);
+			throw new GluuRadiusServerException("Operation not allowed due to security restrictions",se);
 		}
 		return this;
 	}
