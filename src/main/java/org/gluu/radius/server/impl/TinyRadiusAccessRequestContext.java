@@ -3,7 +3,7 @@ package org.gluu.radius.server.impl;
 import java.net.InetSocketAddress;
 import org.tinyradius.packet.AccessRequest;
 import org.gluu.radius.server.AccessRequestContext;
-import org.gluu.radius.server.GluuRadiusException;
+import org.gluu.radius.server.GluuRadiusServerException;
 
 public class TinyRadiusAccessRequestContext extends TinyRadiusRequestContext implements AccessRequestContext {
 	
@@ -19,7 +19,7 @@ public class TinyRadiusAccessRequestContext extends TinyRadiusRequestContext imp
 			AccessRequest req = (AccessRequest) packet;
 			return req.getUserName();
 		}catch(RuntimeException re)  {
-			throw new GluuRadiusException("Error getting username in radius access request",re);
+			throw new GluuRadiusServerException("Error getting username in radius access request",re);
 		}
 	}
 

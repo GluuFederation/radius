@@ -4,14 +4,20 @@ package org.gluu.radius.config;
 public class LdapConfiguration {
 	
 	private String hostname;
-	private String username;
+	private Integer port;
+	private String  bindDn;
 	private String password;
 	private Boolean sslenabled;
+	private String applianceInum;
 
 	public LdapConfiguration() {
 
-		this.hostname = "127.0.0.1";
+		this.hostname = null;
+		this.port = null;
+		this.bindDn = null;
+		this.password = null;
 		this.sslenabled = true;
+		this.applianceInum = null;
 	}
 
 	public String getHostname() {
@@ -25,15 +31,31 @@ public class LdapConfiguration {
 		return this;
 	}
 
-	public String getUsername() {
+	public Integer getPort() {
 
-		return this.username;
+		return this.port;
 	}
 
-	public LdapConfiguration setUsername(String username) {
+	public LdapConfiguration setPort(Integer port) {
 
-		this.username = username;
+		this.port = port;
 		return this;
+	}
+
+	public String getBindDn() {
+
+		return this.bindDn;
+	}
+
+	public LdapConfiguration setBindDn(String bindDn) {
+
+		this.bindDn = bindDn;
+		return this;
+	}
+
+	public String getPassword() {
+
+		return this.password;
 	}
 
 	public LdapConfiguration setPassword(String password) {
@@ -46,6 +68,19 @@ public class LdapConfiguration {
 	public LdapConfiguration setSslEnabled(Boolean sslenabled) {
 
 		this.sslenabled = sslenabled;
+		return this;
+	}
+
+
+	public String getApplianceInum() {
+
+		return this.applianceInum;
+	}
+
+
+	public LdapConfiguration setApplianceInum(String applianceInum) {
+
+		this.applianceInum = applianceInum;
 		return this;
 	}
 }

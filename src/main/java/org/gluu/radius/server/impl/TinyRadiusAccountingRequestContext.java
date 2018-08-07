@@ -3,7 +3,7 @@ package org.gluu.radius.server.impl;
 import java.net.InetSocketAddress;
 import org.gluu.radius.server.AccountingStatusType;
 import org.gluu.radius.server.AccountingRequestContext;
-import org.gluu.radius.server.GluuRadiusException;
+import org.gluu.radius.server.GluuRadiusServerException;
 import org.tinyradius.packet.AccountingRequest;
 import org.tinyradius.util.RadiusException;
 
@@ -20,9 +20,9 @@ public class TinyRadiusAccountingRequestContext extends TinyRadiusRequestContext
 			AccountingRequest req = (AccountingRequest) packet;
 			return req.getUserName();
 		}catch(RuntimeException re) {
-			throw new GluuRadiusException("Could not get username on accounting request",re);
+			throw new GluuRadiusServerException("Could not get username on accounting request",re);
 		}catch(RadiusException rae) {
-			throw new GluuRadiusException("Could not get username on accounting request",rae);
+			throw new GluuRadiusServerException("Could not get username on accounting request",rae);
 		}
 	}
 
@@ -56,9 +56,9 @@ public class TinyRadiusAccountingRequestContext extends TinyRadiusRequestContext
 
 			return ret;
 		}catch(RadiusException rae) {
-			throw new GluuRadiusException("Could not get accounting status type",rae);
+			throw new GluuRadiusServerException("Could not get accounting status type",rae);
 		}catch(RuntimeException re) {
-			throw new GluuRadiusException("Could not get accounting status type",re);
+			throw new GluuRadiusServerException("Could not get accounting status type",re);
 		}
 	}
 }
