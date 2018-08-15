@@ -12,44 +12,83 @@ import org.gluu.radius.util.PropertyUtil;
 
 public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 
-	private static final String LDAP_SERVER_HOSTNAME_KEY = "ldap.server.hostname";
-	private static final String LDAP_SERVER_PORT_KEY = "ldap.server.port";
-	private static final String LDAP_SERVER_BIND_DN_KEY =  "ldap.server.bindDn";
-	private static final String LDAP_SERVER_PASSWORD_KEY = "ldap.server.password";
-	private static final String LDAP_SERVER_USE_SSL_KEY = "ldap.server.usessl";
-	private static final String LDAP_SERVER_APPLIANCE_INUM_KEY = "ldap.server.applianceInum";
-	private Properties configprops;
+	
+	private static final String RADIUS_CONFIG_SALT_KEY = "radius.config.salt";
+	private static final String RADIUS_CONFIG_OXLDAP_KEY = "radius.config.oxldap";
+	private static final String RADIUS_LDAP_CONNPOOL_SIZE_KEY = "radius.ldap.connpoolsize";
+	private static final String RADIUS_LDAP_VERIFYSSL_KEY = "radius.ldap.verifyssl";
+
+	private static final String ENCODE_SALT_KEY = "encodeSalt";
+
+	private static final String BIND_DN_KEY = "bindDN";
+	private static final String BIND_PASSWORD_KEY = "bindPassword";
+	private static final String SERVERS_KEY = "servers";
+	private static final String USE_SSL_KEY = "useSSL";
+	private static final String SSL_TRUSTSTORE_FILE_KEY  = "ssl.trustStoreFile";
+	private static final String SSL_TRUSTSTORE_PIN_KEY   = "ssl.trustStorePin";
+	private static final String SSL_TRUSTSTORE_FORMAT_KEY = "ssl.trustStoreFormat";
+
+	private String salt; // encryption/decryption key
+	private Properties primaryconfig;
+	private Properties oxldapconfig;
 
 	public GluuRadiusConfigurationProvider(String configfile) {
 
-		FileInputStream instream = null;
-		try {
-			this.configprops = new Properties();
-			instream = new FileInputStream(configfile);
-			configprops.load(instream);
-		}catch(IOException ioe) {
-			throw new GluuRadiusConfigException("could not create config provider (I/O error)",ioe);
-		}catch(SecurityException se) {
-			throw new GluuRadiusConfigException("could not create config provider (security restrictions)",se);
-		}catch(IllegalArgumentException iae) {
-			throw new GluuRadiusConfigException("could not create config (malformed file config file)",iae); 
-		}finally {
-			closeStream(instream);
-		}
+		if(configfile == null)
+			throw new GluuRadiusConfigException("Missing configuration filename");
 
+		primaryconfig = loadPropertiesFromFile(configfile);
+
+		String saltfile = PropertyUtil.getStringProperty(primaryconfig,RADIUS_CONFIG_SALT_KEY);
+		if(saltfile == null)
+			throw new GluuRadiusConfigException("Missing salt file name");
+
+		Properties saltconfig = loadPropertiesFromFile(saltfile);
+		salt = PropertyUtil.getStringProperty(saltconfig,ENCODE_SALT_KEY);
+
+		String oxldapconfigfile = PropertyUtil.getStringProperty(primaryconfig,RADIUS_CONFIG_OXLDAP_KEY);
+
+		if(oxldapconfigfile == null)
+			throw new GluuRadiusConfigException("Missing ox-ldap configuration file");
+
+		oxldapconfig = loadPropertiesFromFile(oxldapconfigfile);
 	}
 
 	@Override
 	public LdapConfiguration getLdapConfiguration() {
 
 		LdapConfiguration config = new LdapConfiguration();
-		config.setHostname(PropertyUtil.getStringProperty(configprops,LDAP_SERVER_HOSTNAME_KEY));
-		config.setPort(PropertyUtil.getIntProperty(configprops,LDAP_SERVER_PORT_KEY));
-		config.setBindDn(PropertyUtil.getStringProperty(configprops,LDAP_SERVER_BIND_DN_KEY));
-		String encpassword = PropertyUtil.getStringProperty(configprops,LDAP_SERVER_PASSWORD_KEY);
-		config.setPassword(CryptoUtil.decryptLdapPassword(encpassword));
-		config.setSslEnabled(PropertyUtil.getBooleanProperty(configprops,LDAP_SERVER_USE_SSL_KEY));
-		config.setApplianceInum(PropertyUtil.getStringProperty(configprops,LDAP_SERVER_APPLIANCE_INUM_KEY));
+		String servers = PropertyUtil.getStringProperty(oxldapconfig,SERVERS_KEY);
+		if(servers == null)
+			throw new GluuRadiusConfigException("Could not find servers entry in config");
+		String [] serverparts = servers.split(":");
+		if(serverparts.length!=2) 
+			throw new GluuRadiusConfigException("Unable to parse and extract servers entry in config");
+
+		config.setHostname(serverparts[0]);
+		try {
+			config.setPort(Integer.parseInt(serverparts[1]));
+		}catch(NumberFormatException e) {
+			throw new GluuRadiusConfigException("Unable to parse ldap server port in config");
+		}
+
+		config.setBindDn(PropertyUtil.getStringProperty(oxldapconfig,BIND_DN_KEY));
+		String encpassword  = PropertyUtil.getStringProperty(oxldapconfig,BIND_PASSWORD_KEY);
+		if(encpassword!=null)
+			config.setPassword(CryptoUtil.decryptPassword(encpassword,salt));
+
+
+		config.setTrustStoreFile(PropertyUtil.getStringProperty(oxldapconfig,SSL_TRUSTSTORE_FILE_KEY));
+		config.setTrustStoreFormat(PropertyUtil.getStringProperty(oxldapconfig,SSL_TRUSTSTORE_FORMAT_KEY));
+		String encpin = PropertyUtil.getStringProperty(oxldapconfig,SSL_TRUSTSTORE_PIN_KEY);
+		if(encpin!=null)
+			config.setTrustStorePin(CryptoUtil.decryptPassword(encpin,salt));
+
+		config.setSslEnabled(PropertyUtil.getBooleanProperty(oxldapconfig,USE_SSL_KEY));
+		config.setSslVerifyEnabled(PropertyUtil.getBooleanProperty(primaryconfig,RADIUS_LDAP_VERIFYSSL_KEY));
+
+		config.setConnPoolSize(PropertyUtil.getIntProperty(primaryconfig,RADIUS_LDAP_CONNPOOL_SIZE_KEY));
+
 		return config;
 	}
 
@@ -60,13 +99,31 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 		return null;
 	}
 
+	private Properties loadPropertiesFromFile(String filename) {
 
-	private final void closeStream(FileInputStream instream) {
+		FileInputStream instream = null;
+		try {
+			instream = new FileInputStream(filename);
+			Properties props = new Properties();
+			props.load(instream);
+			return props;
+		}catch(IOException e) {
+			throw new GluuRadiusConfigException("I/O error loading config file " + filename,e);
+		}catch(SecurityException e) {
+			throw new GluuRadiusConfigException("Security exception loading config file " + filename,e);
+		}catch(IllegalArgumentException e) {
+			throw new GluuRadiusConfigException("Malformed config file " + filename,e);
+		}finally {
+			closeFileStream(instream);
+		}
+	}
+
+	private final void closeFileStream(FileInputStream instream) {
 
 		try {
 			if(instream!=null)
 				instream.close();
-		}catch(IOException ioe) {
+		}catch(IOException e) {
 
 		}
 	}
