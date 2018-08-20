@@ -3,6 +3,42 @@ package org.gluu.radius.config;
 
 public class LdapConfiguration {
 	
+	// connection pool configuration 
+	public static class ConnPoolConfiguration {
+
+		private Integer unboundcpsize;
+		private Integer boundcpsize;
+
+		public ConnPoolConfiguration() {
+
+			this.boundcpsize = null;
+			this.unboundcpsize = null;
+		}
+
+		public Integer getUnboundCpSize() {
+
+			return this.unboundcpsize;
+		}
+
+		public ConnPoolConfiguration setUnboundCpSize(Integer size) {
+
+			this.unboundcpsize = size;
+			return this;
+		}
+
+		public Integer getBoundCpSize() {
+
+			return this.boundcpsize;
+		}
+
+		public ConnPoolConfiguration setBoundCpSize(Integer size) {
+
+			this.boundcpsize = size;
+			return this;
+		}
+
+	}
+
 	private String hostname;
 	private Integer port;
 	private String  bindDn;
@@ -14,7 +50,7 @@ public class LdapConfiguration {
 	private Boolean sslverifyenabled;
 
 	// connection pool configuration 
-	private Integer connpoolsize;
+	private ConnPoolConfiguration cpconfig;
 
 	public LdapConfiguration() {
 
@@ -27,7 +63,7 @@ public class LdapConfiguration {
 		this.truststoreformat = null;
 		this.sslenabled = true;
 		this.sslverifyenabled = true;
-		this.connpoolsize = null;
+		this.cpconfig = new ConnPoolConfiguration();
 	}
 
 	public String getHostname() {
@@ -130,14 +166,8 @@ public class LdapConfiguration {
 		return this;
 	}
 
-	public Integer getConnPoolSize() {
+	public ConnPoolConfiguration getConnPoolConfig() {
 
-		return this.connpoolsize;
-	}
-
-	public LdapConfiguration setConnPoolSize(Integer connpoolsize) {
-
-		this.connpoolsize = connpoolsize;
-		return this;
+		return this.cpconfig;
 	}
 }
