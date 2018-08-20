@@ -61,17 +61,20 @@ public class GluuRadiusConfigurationProviderTest {
 		LdapConfiguration ldapconfig  = provider.getLdapConfiguration();
 
 		Integer port = 1636;
-		Integer connpoolsize = 1;
+		Integer boundcpsize = 1;
+		Integer unboundcpsize = 10;
 		assertEquals("localhost",ldapconfig.getHostname());
 		assertEquals(port,ldapconfig.getPort());
 		assertEquals("cn=directory manager",ldapconfig.getBindDn());
 		assertEquals("gluu",ldapconfig.getPassword());
 		assertEquals(true,ldapconfig.getSslEnabled());
 
-		assertEquals("/etc/certs/opendj.pkcs12",ldapconfig.getTrustStoreFile());
+		assertEquals("opendj.pkcs12",ldapconfig.getTrustStoreFile());
 		assertEquals("Agtyc0lLNwuC",ldapconfig.getTrustStorePin());
 		assertEquals("pkcs12",ldapconfig.getTrustStoreFormat());
-		assertEquals(connpoolsize,ldapconfig.getConnPoolSize());
 		assertEquals(true,ldapconfig.getSslVerifyEnabled());
+		assertEquals(boundcpsize,ldapconfig.getConnPoolConfig().getBoundCpSize());
+		assertEquals(unboundcpsize,ldapconfig.getConnPoolConfig().getUnboundCpSize());
+
 	}
 }

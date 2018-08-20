@@ -22,6 +22,7 @@ import org.gluu.radius.config.LdapConfiguration;
 public class GluuRadiusLdapConnectionProvider {
 
 	private static final Integer DEFAULT_CONN_POOL_SIZE = 1;
+
 	enum GluuRadiusConnectionType {
 		UnboundConnection,
 		BoundConnection
@@ -30,12 +31,26 @@ public class GluuRadiusLdapConnectionProvider {
 	public  class GluuRadiusLdapConnection {
 
 		private GluuRadiusConnectionType type;
-		private LDAPInterface conn;
+		private LDAPConnection conn;
+		private LDAPConnectionPool connpool;
 
-		public GluuRadiusLdapConnection(GluuRadiusConnectionType type, LDAPInterface conn) {
+		public GluuRadiusLdapConnection(GluuRadiusConnectionType type, LDAPConnection conn,
+			LDAPConnectionPool connpool) {
 
 			this.type = type;
 			this.conn = conn;
+			this.connpool = connpool;
+		}
+
+
+		public LDAPInterface getConnection() {
+
+			return conn;
+		}
+
+		public void release() {
+
+			connpool.releaseConnection(conn);
 		}
 	}
 
@@ -46,37 +61,58 @@ public class GluuRadiusLdapConnectionProvider {
 	public GluuRadiusLdapConnectionProvider(LdapConfiguration config) {
 
 		this.config = config;
-		this.unboundcp = createConnectionPool();
-		this.boundcp = createConnectionPool();
+		this.unboundcp = createConnectionPool(false);
+		this.boundcp = createConnectionPool(true);
 		
 	}
 
 	public GluuRadiusLdapConnection getUnboundLdapConnection() {
 
-		return null;
+		try {
+			LDAPConnection conn = unboundcp.getConnection();
+			return new GluuRadiusLdapConnection(GluuRadiusConnectionType.UnboundConnection,
+				conn,unboundcp);
+		}catch(LDAPException e) {
+			throw new GluuRadiusLdapException("Could not get unbound ldap connection",e);
+		}
 	}
 
 	public GluuRadiusLdapConnection getBoundLdapConnection() {
 
-		return null;	
+		try {
+			LDAPConnection conn = boundcp.getConnection();
+			return new GluuRadiusLdapConnection(GluuRadiusConnectionType.BoundConnection,
+				conn,boundcp);
+		}catch(LDAPException e) {
+			throw new GluuRadiusLdapException("Could not get bound ldap connection",e);
+		}
 	}
 
 	
 
-	private LDAPConnectionPool  createConnectionPool() {
+	private LDAPConnectionPool  createConnectionPool(boolean performbind) {
 
 		try {
 
-			Integer connpoolsize = DEFAULT_CONN_POOL_SIZE;
-			if(config.getConnPoolSize() != null)
-				connpoolsize = config.getConnPoolSize();
+			Integer cpsize = DEFAULT_CONN_POOL_SIZE;
+			
+			if(performbind==true && config.getConnPoolConfig().getBoundCpSize() != null)
+				cpsize = config.getConnPoolConfig().getBoundCpSize();
+
+			if(performbind==false && config.getConnPoolConfig().getUnboundCpSize() != null)
+				cpsize = config.getConnPoolConfig().getUnboundCpSize();
+
 			LDAPConnection conn = null;
 			if(config.getSslEnabled() == true) {
 				conn = getSecuredLDAPConnection();
 			}else {
 				conn = getUnsecuredLDAPConnection();
 			}
-			return new LDAPConnectionPool(conn,connpoolsize);
+
+			if(performbind)
+				conn.bind(config.getBindDn(),config.getPassword());
+
+			return new LDAPConnectionPool(conn,cpsize);
 
 		}catch(LDAPException e) {
 			throw new GluuRadiusLdapException("Could not create connection pool",e);

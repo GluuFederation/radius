@@ -15,7 +15,8 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 	
 	private static final String RADIUS_CONFIG_SALT_KEY = "radius.config.salt";
 	private static final String RADIUS_CONFIG_OXLDAP_KEY = "radius.config.oxldap";
-	private static final String RADIUS_LDAP_CONNPOOL_SIZE_KEY = "radius.ldap.connpoolsize";
+	private static final String RADIUS_LDAP_UNBOUNDCP_SIZE_KEY = "radius.ldap.cpool.unbound.size";
+	private static final String RADIUS_LDAP_BOUNDCP_SIZE_KEY = "radius.ldap.cpool.bound.size";
 	private static final String RADIUS_LDAP_VERIFYSSL_KEY = "radius.ldap.verifyssl";
 
 	private static final String ENCODE_SALT_KEY = "encodeSalt";
@@ -87,7 +88,11 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 		config.setSslEnabled(PropertyUtil.getBooleanProperty(oxldapconfig,USE_SSL_KEY));
 		config.setSslVerifyEnabled(PropertyUtil.getBooleanProperty(primaryconfig,RADIUS_LDAP_VERIFYSSL_KEY));
 
-		config.setConnPoolSize(PropertyUtil.getIntProperty(primaryconfig,RADIUS_LDAP_CONNPOOL_SIZE_KEY));
+		// conn pool 
+		Integer boundcpsize = PropertyUtil.getIntProperty(primaryconfig,RADIUS_LDAP_BOUNDCP_SIZE_KEY);
+		Integer unboundcpsize = PropertyUtil.getIntProperty(primaryconfig,RADIUS_LDAP_UNBOUNDCP_SIZE_KEY);
+		config.getConnPoolConfig().setBoundCpSize(boundcpsize);
+		config.getConnPoolConfig().setUnboundCpSize(unboundcpsize);
 
 		return config;
 	}
