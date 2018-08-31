@@ -1,0 +1,38 @@
+dn: cn=schema
+changetype: modify
+add: attributeTypes
+attributeTypes: ( 1.3.6.1.4.48710.1.3.387 NAME 'oxRadiusListenIpAddress'
+    DESC 'oxRadius Listen Ip Address'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.48710.1.3.388 NAME 'oxRadiusAuthenticationPort'
+    DESC 'oxRadius Authentication Listen Port'
+    EQUALITY integerMatch
+    SUBSTR integerOrderingMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+    X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.48710.1.3.389 NAME 'oxRadiusAccountingPort'
+    DESC 'oxRadius Accounting Listen Port'
+    EQUALITY integerMatch
+    SUBSTR integerOrderingMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+    X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.48710.1.3.390 NAME 'oxRadiusClientConfig'
+    DESC 'oxRadius NAS Clients Configuration'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    X-ORIGIN 'Gluu created attribute' )
+
+dn: cn=schema
+changetype: modify
+add: objectClasses
+objectClasses: ( 1.3.6.1.4.1.48710.1.4.51 NAME 'oxRadiusConfiguration'
+   SUP ( top )
+   STRUCTURAL
+   MUST ( objectClass )
+   MAY  ( ou $ oxRadiusListenIpAddress $ oxRadiusAuthenticationPort $ oxRadiusAccountingPort $ oxRadiusClientConfig )
+   X-ORIGIN 'Gluu created objectClass' )
+

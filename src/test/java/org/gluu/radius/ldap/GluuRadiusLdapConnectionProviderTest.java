@@ -49,7 +49,8 @@ public class GluuRadiusLdapConnectionProviderTest {
 
 	private LdapConfiguration getValidLdapConnection() {
 
-		GluuRadiusConfigurationProvider cfgprovider = new GluuRadiusConfigurationProvider("valid-config.properties");
+		String configfile = "ldap-test-server.properties";
+		GluuRadiusConfigurationProvider cfgprovider = new GluuRadiusConfigurationProvider(configfile);
 		return cfgprovider.getLdapConfiguration();
 	}
 }

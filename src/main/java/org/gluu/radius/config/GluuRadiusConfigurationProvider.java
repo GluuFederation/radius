@@ -29,6 +29,9 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 	private static final String SSL_TRUSTSTORE_PIN_KEY   = "ssl.trustStorePin";
 	private static final String SSL_TRUSTSTORE_FORMAT_KEY = "ssl.trustStoreFormat";
 
+	private static final String OXRADIUS_CONFIG_ENTRY_DN_KEY = "oxradius_ConfigurationEntryDN";
+	private static final String PEOPLE_CONFIG_ENTRY_DN_KEY  ="gluu.server.peopleConfigurationEntryDN";
+
 	private String salt; // encryption/decryption key
 	private Properties primaryconfig;
 	private Properties oxldapconfig;
@@ -94,6 +97,12 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 		config.getConnPoolConfig().setBoundCpSize(boundcpsize);
 		config.getConnPoolConfig().setUnboundCpSize(unboundcpsize);
 
+		// DNs 
+		String radiusconfigentrydn = PropertyUtil.getStringProperty(oxldapconfig,OXRADIUS_CONFIG_ENTRY_DN_KEY);
+		String peopleconfigentrydn = PropertyUtil.getStringProperty(primaryconfig,PEOPLE_CONFIG_ENTRY_DN_KEY);
+		config.setRadiusConfigEntryDn(radiusconfigentrydn);
+		config.setPeopleConfigEntryDn(peopleconfigentrydn);
+		
 		return config;
 	}
 

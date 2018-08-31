@@ -1,10 +1,12 @@
 package org.gluu.radius.ldap;
 
+import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.LDAPInterface;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.ResultCode;
 
 import com.unboundid.util.ssl.HostNameSSLSocketVerifier;
 import com.unboundid.util.ssl.SSLUtil;
@@ -43,7 +45,7 @@ public class GluuRadiusLdapConnectionProvider {
 		}
 
 
-		public LDAPInterface getConnection() {
+		public LDAPConnection getConnection() {
 
 			return conn;
 		}
@@ -51,6 +53,17 @@ public class GluuRadiusLdapConnectionProvider {
 		public void release() {
 
 			connpool.releaseConnection(conn);
+		}
+
+
+		public void performBind(String bindDn,String password) {
+
+			try {
+				BindResult result = conn.bind(bindDn,password);
+				GluuRadiusLdapConnectionProvider.this.validateBindResult(result);
+			}catch(LDAPException e) {
+				throw new GluuRadiusLdapException("LDAP Bind operation failed",e);
+			}
 		}
 	}
 
@@ -110,7 +123,7 @@ public class GluuRadiusLdapConnectionProvider {
 			}
 
 			if(performbind)
-				conn.bind(config.getBindDn(),config.getPassword());
+				validateBindResult(conn.bind(config.getBindDn(),config.getPassword()));
 
 			return new LDAPConnectionPool(conn,cpsize);
 
@@ -182,6 +195,13 @@ public class GluuRadiusLdapConnectionProvider {
 		}catch(GeneralSecurityException e) {
 			throw new GluuRadiusLdapException("Could not initialize ssl");
 		}
+	}
+
+
+	private void validateBindResult(BindResult result) {
+
+		if(result.getResultCode() != ResultCode.SUCCESS)
+			throw new GluuRadiusLdapException("Ldap bind operation failed. "+result.getDiagnosticMessage());
 	}
 
 }

@@ -69,7 +69,7 @@ public class GluuRadiusConfigurationProviderTest {
 		assertEquals("gluu",ldapconfig.getPassword());
 		assertEquals(true,ldapconfig.getSslEnabled());
 
-		assertEquals("opendj.pkcs12",ldapconfig.getTrustStoreFile());
+		assertEquals("/etc/certs/opendj.pkcs12",ldapconfig.getTrustStoreFile());
 		assertEquals("Agtyc0lLNwuC",ldapconfig.getTrustStorePin());
 		assertEquals("pkcs12",ldapconfig.getTrustStoreFormat());
 		assertEquals(true,ldapconfig.getSslVerifyEnabled());

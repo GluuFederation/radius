@@ -52,6 +52,11 @@ public class LdapConfiguration {
 	// connection pool configuration 
 	private ConnPoolConfiguration cpconfig;
 
+	// DNs so we don't have to harcode them 
+	// within the app itself 
+	private String radiusconfigentrydn;
+	private String peopleconfigentrydn;
+
 	public LdapConfiguration() {
 
 		this.hostname = null;
@@ -64,6 +69,8 @@ public class LdapConfiguration {
 		this.sslenabled = true;
 		this.sslverifyenabled = true;
 		this.cpconfig = new ConnPoolConfiguration();
+		this.radiusconfigentrydn = null;
+		this.peopleconfigentrydn = null;
 	}
 
 	public String getHostname() {
@@ -169,5 +176,29 @@ public class LdapConfiguration {
 	public ConnPoolConfiguration getConnPoolConfig() {
 
 		return this.cpconfig;
+	}
+
+
+	public String getRadiusConfigEntryDn() {
+
+		return this.radiusconfigentrydn;
+	}
+
+	public LdapConfiguration setRadiusConfigEntryDn(String radiusconfigdn) {
+
+		this.radiusconfigentrydn = radiusconfigentrydn;
+		return this;
+	}
+
+
+	public String getPeopleConfigEntryDn() {
+
+		return this.peopleconfigentrydn;
+	}
+
+	public LdapConfiguration setPeopleConfigEntryDn(String peopleconfigdn) {
+
+		this.peopleconfigentrydn = peopleconfigentrydn;
+		return this;
 	}
 }
