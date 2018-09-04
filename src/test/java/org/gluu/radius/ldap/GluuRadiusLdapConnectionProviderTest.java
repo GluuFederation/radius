@@ -1,7 +1,7 @@
 package org.gluu.radius.ldap;
 
 import org.gluu.radius.config.LdapConfiguration;
-import org.gluu.radius.config.GluuRadiusConfigurationProvider;
+import org.gluu.radius.services.impl.GluuBootstrapConfigServiceImpl; // not optimal
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -50,7 +50,9 @@ public class GluuRadiusLdapConnectionProviderTest {
 	private LdapConfiguration getValidLdapConnection() {
 
 		String configfile = "ldap-test-server.properties";
-		GluuRadiusConfigurationProvider cfgprovider = new GluuRadiusConfigurationProvider(configfile);
-		return cfgprovider.getLdapConfiguration();
+		// this isn't optimal
+		// replace later with a factory or a service provider
+		GluuBootstrapConfigServiceImpl cfgservice = new GluuBootstrapConfigServiceImpl(configfile);
+		return cfgservice.getLdapConfiguration();
 	}
 }

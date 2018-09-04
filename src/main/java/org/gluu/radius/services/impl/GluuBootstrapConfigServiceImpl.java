@@ -1,4 +1,4 @@
-package org.gluu.radius.config;
+package org.gluu.radius.services.impl;
 
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -6,11 +6,14 @@ import java.util.Properties;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.gluu.radius.config.LdapConfiguration;
 import org.gluu.radius.util.CryptoUtil;
 import org.gluu.radius.util.PropertyUtil;
+import org.gluu.radius.services.GluuBootstrapConfigService;
+import org.gluu.radius.services.GluuRadiusServiceException;
 
 
-public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
+public class GluuBootstrapConfigServiceImpl implements GluuBootstrapConfigService {
 
 	
 	private static final String RADIUS_CONFIG_SALT_KEY = "radius.config.salt";
@@ -36,16 +39,16 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 	private Properties primaryconfig;
 	private Properties oxldapconfig;
 
-	public GluuRadiusConfigurationProvider(String configfile) {
+	public GluuBootstrapConfigServiceImpl(String configfile) {
 
 		if(configfile == null)
-			throw new GluuRadiusConfigException("Missing configuration filename");
+			throw new GluuRadiusServiceException("Missing configuration filename");
 
 		primaryconfig = loadPropertiesFromFile(configfile);
 
 		String saltfile = PropertyUtil.getStringProperty(primaryconfig,RADIUS_CONFIG_SALT_KEY);
 		if(saltfile == null)
-			throw new GluuRadiusConfigException("Missing salt file name");
+			throw new GluuRadiusServiceException("Missing salt file name");
 
 		Properties saltconfig = loadPropertiesFromFile(saltfile);
 		salt = PropertyUtil.getStringProperty(saltconfig,ENCODE_SALT_KEY);
@@ -53,7 +56,7 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 		String oxldapconfigfile = PropertyUtil.getStringProperty(primaryconfig,RADIUS_CONFIG_OXLDAP_KEY);
 
 		if(oxldapconfigfile == null)
-			throw new GluuRadiusConfigException("Missing ox-ldap configuration file");
+			throw new GluuRadiusServiceException("Missing ox-ldap configuration file");
 
 		oxldapconfig = loadPropertiesFromFile(oxldapconfigfile);
 	}
@@ -64,16 +67,16 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 		LdapConfiguration config = new LdapConfiguration();
 		String servers = PropertyUtil.getStringProperty(oxldapconfig,SERVERS_KEY);
 		if(servers == null)
-			throw new GluuRadiusConfigException("Could not find servers entry in config");
+			throw new GluuRadiusServiceException("Could not find servers entry in config");
 		String [] serverparts = servers.split(":");
 		if(serverparts.length!=2) 
-			throw new GluuRadiusConfigException("Unable to parse and extract servers entry in config");
+			throw new GluuRadiusServiceException("Unable to parse and extract servers entry in config");
 
 		config.setHostname(serverparts[0]);
 		try {
 			config.setPort(Integer.parseInt(serverparts[1]));
 		}catch(NumberFormatException e) {
-			throw new GluuRadiusConfigException("Unable to parse ldap server port in config");
+			throw new GluuRadiusServiceException("Unable to parse ldap server port in config");
 		}
 
 		config.setBindDn(PropertyUtil.getStringProperty(oxldapconfig,BIND_DN_KEY));
@@ -106,11 +109,10 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 		return config;
 	}
 
+	@Override 
+	public String getEncryptionKey() {
 
-	@Override
-	public RadiusServerConfiguration getRadiusServerConfiguration() {
-
-		return null;
+		return salt;
 	}
 
 	private Properties loadPropertiesFromFile(String filename) {
@@ -122,11 +124,11 @@ public class GluuRadiusConfigurationProvider implements ConfigurationProvider {
 			props.load(instream);
 			return props;
 		}catch(IOException e) {
-			throw new GluuRadiusConfigException("I/O error loading config file " + filename,e);
+			throw new GluuRadiusServiceException("I/O error loading config file " + filename,e);
 		}catch(SecurityException e) {
-			throw new GluuRadiusConfigException("Security exception loading config file " + filename,e);
+			throw new GluuRadiusServiceException("Security exception loading config file " + filename,e);
 		}catch(IllegalArgumentException e) {
-			throw new GluuRadiusConfigException("Malformed config file " + filename,e);
+			throw new GluuRadiusServiceException("Malformed config file " + filename,e);
 		}finally {
 			closeFileStream(instream);
 		}

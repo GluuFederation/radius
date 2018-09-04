@@ -34,18 +34,17 @@ public class GluuRadiusClientConfig {
 			return this;
 		}
 
-		@JsonSetter("ipaddress")
 		public String getIpAddress() {
 
 			return this.ipaddress;
 		}
 
-
 		public boolean isIpAddress(String ipaddress) {
 
-			return ipaddress!=null && ipaddress.equalsIgnoreCase(ipaddress);
+			return ipaddress!=null && this.ipaddress.equalsIgnoreCase(ipaddress);
 		}
 
+		@JsonSetter("ipaddress")
 		public GluuRadiusClient setIpAddress(String ipaddress) {
 
 			this.ipaddress = ipaddress;
