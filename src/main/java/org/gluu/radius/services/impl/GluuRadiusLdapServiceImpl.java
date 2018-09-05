@@ -125,7 +125,7 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 		try {
 			conn = connprovider.getBoundLdapConnection();
 			String clientconfig = oxRadiusConfigAttributeAsString(OXRADIUS_CLIENT_CONFIG_ATTRIBUTE_NAME,conn);
-			return null;
+			return getRadiusClientSecret(clientipaddress,clientconfig);
 		}catch(GluuRadiusLdapException e) {
 			throw new GluuRadiusServiceException("LDAP operation failed",e);
 		}finally {
@@ -201,7 +201,7 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 		return oxrconfigfilter;
 	}
 
-	private String getRadiusClientPassword(String ipaddress,String jsondata) {
+	private String getRadiusClientSecret(String ipaddress,String jsondata) {
 
 		List<GluuRadiusClient> clients = radiusClientListFromJson(jsondata);
 		for(GluuRadiusClient client : clients) {
@@ -225,6 +225,7 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 	private String decryptClientSecret(String encryptedsecret) {
 
 		try {
+			System.out.println("decryption key: " + decryptionkey+" Secret: " + encryptedsecret);
 			return CryptoUtil.decryptPassword(encryptedsecret,decryptionkey);
 		}catch(GluuRadiusException e) {
 			throw new GluuRadiusServiceException("Client secret decryption failed",e);
