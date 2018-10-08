@@ -3,7 +3,6 @@ package org.gluu.radius.services.impl.openid.handlers;
 import java.io.IOException;
 import java.io.InputStream;
 
-
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.HttpResponse;

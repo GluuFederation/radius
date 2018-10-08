@@ -11,8 +11,8 @@ public class GluuRadiusUserAuthResult {
 	public GluuRadiusUserAuthResult(boolean success,String error,String errordescription) {
 
 		this.success  =  success;
-		this.error = null;
-		this.errordescription = null;
+		this.error = error;
+		this.errordescription = errordescription;
 	}
 
 
