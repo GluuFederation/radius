@@ -1,7 +1,7 @@
 package org.gluu.radius.server;
 
 
-public enum PacketType {
+public enum GluuRadiusPacketType {
 	ACCESS_ACCEPT,
 	ACCESS_CHALLENGE,
 	ACCESS_REJECT,

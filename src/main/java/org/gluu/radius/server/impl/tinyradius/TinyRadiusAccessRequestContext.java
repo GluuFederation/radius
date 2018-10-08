@@ -1,11 +1,11 @@
-package org.gluu.radius.server.impl;
+package org.gluu.radius.server.impl.tinyradius;
 
 import java.net.InetSocketAddress;
 import org.tinyradius.packet.AccessRequest;
-import org.gluu.radius.server.AccessRequestContext;
+import org.gluu.radius.server.GluuRadiusAccessRequestContext;
 import org.gluu.radius.server.GluuRadiusServerException;
 
-public class TinyRadiusAccessRequestContext extends TinyRadiusRequestContext implements AccessRequestContext {
+public class TinyRadiusAccessRequestContext extends TinyRadiusRequestContext implements GluuRadiusAccessRequestContext {
 	
 
 	public TinyRadiusAccessRequestContext(AccessRequest request,InetSocketAddress client) {

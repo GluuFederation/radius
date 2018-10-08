@@ -1,13 +1,13 @@
-package org.gluu.radius.server.impl;
+package org.gluu.radius.server.impl.tinyradius;
 
 import java.net.InetSocketAddress;
-import org.gluu.radius.server.AccountingStatusType;
-import org.gluu.radius.server.AccountingRequestContext;
+import org.gluu.radius.server.GluuRadiusAccountingStatusType;
+import org.gluu.radius.server.GluuRadiusAccountingRequestContext;
 import org.gluu.radius.server.GluuRadiusServerException;
 import org.tinyradius.packet.AccountingRequest;
 import org.tinyradius.util.RadiusException;
 
-public class TinyRadiusAccountingRequestContext extends TinyRadiusRequestContext implements AccountingRequestContext {
+public class TinyRadiusAccountingRequestContext extends TinyRadiusRequestContext implements GluuRadiusAccountingRequestContext {
 	
 	public TinyRadiusAccountingRequestContext(AccountingRequest request,InetSocketAddress client) {
 		super(request,client);
@@ -27,30 +27,30 @@ public class TinyRadiusAccountingRequestContext extends TinyRadiusRequestContext
 	}
 
 	@Override
-	public AccountingStatusType getAccountingStatusType() {
+	public GluuRadiusAccountingStatusType getAccountingStatusType() {
 
 		try {
 
 			AccountingRequest req = (AccountingRequest) packet;
-			AccountingStatusType ret = AccountingStatusType.UNKNOWN_STATUS;
+			GluuRadiusAccountingStatusType ret = GluuRadiusAccountingStatusType.UNKNOWN_STATUS;
 
 			switch(req.getAcctStatusType()) {
 				default:
 					break;
 				case AccountingRequest.ACCT_STATUS_TYPE_ACCOUNTING_OFF:
-					ret = AccountingStatusType.ACCOUNTING_OFF;
+					ret = GluuRadiusAccountingStatusType.ACCOUNTING_OFF;
 					break;
 				case AccountingRequest.ACCT_STATUS_TYPE_ACCOUNTING_ON:
-					ret = AccountingStatusType.ACCOUNTING_ON;
+					ret = GluuRadiusAccountingStatusType.ACCOUNTING_ON;
 					break;
 				case AccountingRequest.ACCT_STATUS_TYPE_INTERIM_UPDATE:
-					ret = AccountingStatusType.INTERIM_UPDATE;
+					ret = GluuRadiusAccountingStatusType.INTERIM_UPDATE;
 					break;
 				case AccountingRequest.ACCT_STATUS_TYPE_START:
-					ret = AccountingStatusType.START;
+					ret = GluuRadiusAccountingStatusType.START;
 					break;
 				case AccountingRequest.ACCT_STATUS_TYPE_STOP:
-					ret = AccountingStatusType.STOP;
+					ret = GluuRadiusAccountingStatusType.STOP;
 					break;
 			}
 

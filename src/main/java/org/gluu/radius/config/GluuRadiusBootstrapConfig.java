@@ -1,42 +1,28 @@
 package org.gluu.radius.config;
 
 
-public class LdapConfiguration {
+public class GluuRadiusBootstrapConfig {
 	
 	// connection pool configuration 
 	public static class ConnPoolConfiguration {
 
-		private Integer unboundcpsize;
-		private Integer boundcpsize;
+		private Integer connpoolsize;
 
 		public ConnPoolConfiguration() {
 
-			this.boundcpsize = null;
-			this.unboundcpsize = null;
+			this.connpoolsize = null;
 		}
 
-		public Integer getUnboundCpSize() {
+		public Integer getConnPoolSize() {
 
-			return this.unboundcpsize;
+			return this.connpoolsize;
 		}
 
-		public ConnPoolConfiguration setUnboundCpSize(Integer size) {
+		public ConnPoolConfiguration setConnPoolSize(Integer connpoolsize) {
 
-			this.unboundcpsize = size;
+			this.connpoolsize = connpoolsize;
 			return this;
 		}
-
-		public Integer getBoundCpSize() {
-
-			return this.boundcpsize;
-		}
-
-		public ConnPoolConfiguration setBoundCpSize(Integer size) {
-
-			this.boundcpsize = size;
-			return this;
-		}
-
 	}
 
 	private String hostname;
@@ -57,7 +43,7 @@ public class LdapConfiguration {
 	private String radiusconfigentrydn;
 	private String peopleconfigentrydn;
 
-	public LdapConfiguration() {
+	public GluuRadiusBootstrapConfig() {
 
 		this.hostname = null;
 		this.port = null;
@@ -78,7 +64,7 @@ public class LdapConfiguration {
 		return this.hostname;
 	}
 
-	public LdapConfiguration setHostname(String hostname) {
+	public GluuRadiusBootstrapConfig setHostname(String hostname) {
 
 		this.hostname = hostname;
 		return this;
@@ -89,7 +75,7 @@ public class LdapConfiguration {
 		return this.port;
 	}
 
-	public LdapConfiguration setPort(Integer port) {
+	public GluuRadiusBootstrapConfig setPort(Integer port) {
 
 		this.port = port;
 		return this;
@@ -100,7 +86,7 @@ public class LdapConfiguration {
 		return this.bindDn;
 	}
 
-	public LdapConfiguration setBindDn(String bindDn) {
+	public GluuRadiusBootstrapConfig setBindDn(String bindDn) {
 
 		this.bindDn = bindDn;
 		return this;
@@ -111,7 +97,7 @@ public class LdapConfiguration {
 		return this.password;
 	}
 
-	public LdapConfiguration setPassword(String password) {
+	public GluuRadiusBootstrapConfig setPassword(String password) {
 
 		this.password = password;
 		return this;
@@ -123,7 +109,7 @@ public class LdapConfiguration {
 		return this.truststorefile;
 	}
 
-	public LdapConfiguration setTrustStoreFile(String truststorefile) {
+	public GluuRadiusBootstrapConfig setTrustStoreFile(String truststorefile) {
 
 		this.truststorefile = truststorefile;
 		return this;
@@ -134,7 +120,7 @@ public class LdapConfiguration {
 		return this.truststorepin;
 	}
 
-	public LdapConfiguration setTrustStorePin(String truststorepin) {
+	public GluuRadiusBootstrapConfig setTrustStorePin(String truststorepin) {
 
 		this.truststorepin = truststorepin;
 		return this;
@@ -145,7 +131,7 @@ public class LdapConfiguration {
 		return this.truststoreformat;
 	}
 
-	public LdapConfiguration setTrustStoreFormat(String truststoreformat) {
+	public GluuRadiusBootstrapConfig setTrustStoreFormat(String truststoreformat) {
 
 		this.truststoreformat = truststoreformat;
 		return this;
@@ -156,7 +142,7 @@ public class LdapConfiguration {
 		return sslenabled;
 	}
 
-	public LdapConfiguration setSslEnabled(Boolean sslenabled) {
+	public GluuRadiusBootstrapConfig setSslEnabled(Boolean sslenabled) {
 
 		this.sslenabled = sslenabled;
 		return this;
@@ -167,7 +153,7 @@ public class LdapConfiguration {
 		return this.sslverifyenabled;
 	}
 
-	public LdapConfiguration setSslVerifyEnabled(Boolean sslverifyenabled) {
+	public GluuRadiusBootstrapConfig setSslVerifyEnabled(Boolean sslverifyenabled) {
 
 		this.sslverifyenabled = sslverifyenabled;
 		return this;
@@ -184,7 +170,7 @@ public class LdapConfiguration {
 		return this.radiusconfigentrydn;
 	}
 
-	public LdapConfiguration setRadiusConfigEntryDn(String radiusconfigdn) {
+	public GluuRadiusBootstrapConfig setRadiusConfigEntryDn(String radiusconfigdn) {
 
 		this.radiusconfigentrydn = radiusconfigentrydn;
 		return this;
@@ -196,7 +182,7 @@ public class LdapConfiguration {
 		return this.peopleconfigentrydn;
 	}
 
-	public LdapConfiguration setPeopleConfigEntryDn(String peopleconfigdn) {
+	public GluuRadiusBootstrapConfig setPeopleConfigEntryDn(String peopleconfigdn) {
 
 		this.peopleconfigentrydn = peopleconfigentrydn;
 		return this;

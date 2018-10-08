@@ -3,8 +3,8 @@ package org.gluu.radius.services;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.gluu.radius.config.LdapConfiguration;
-import org.gluu.radius.services.impl.GluuBootstrapConfigServiceImpl;
+import org.gluu.radius.config.GluuRadiusBootstrapConfig;
+import org.gluu.radius.services.impl.GluuRadiusBootstrapConfigServiceImpl;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -17,7 +17,7 @@ import static org.junit.Assert.fail;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
 
-public class GluuBootstrapConfigServiceTest {
+public class GluuRadiusBootstrapConfigServiceTest {
 	
 	private static final String MISSING_CONFIG_FILENAME = "missing-config.properties";
 	private static final String INVALID_CONFIG_FILENAME = "invalid-config.properties";
@@ -28,7 +28,7 @@ public class GluuBootstrapConfigServiceTest {
 
 		try {
 
-			GluuBootstrapConfigService service = new GluuBootstrapConfigServiceImpl(null);
+			GluuRadiusBootstrapConfigService service = new GluuRadiusBootstrapConfigServiceImpl(null);
 			fail("expected GluuRadiusConfigException not thrown");
 		}catch(GluuRadiusServiceException e) {
 			assertThat(e.getMessage(),is("Missing configuration filename"));
@@ -39,7 +39,7 @@ public class GluuBootstrapConfigServiceTest {
 	public void missingConfigurationFile() {
 
 		try {
-			GluuBootstrapConfigService service = new GluuBootstrapConfigServiceImpl(MISSING_CONFIG_FILENAME);
+			GluuRadiusBootstrapConfigService service = new GluuRadiusBootstrapConfigServiceImpl(MISSING_CONFIG_FILENAME);
 			fail("expected GluuRadiusConfigException not thrown");
 		}catch(GluuRadiusServiceException e) {
 			assertTrue(e.getCause() instanceof FileNotFoundException);
@@ -51,7 +51,7 @@ public class GluuBootstrapConfigServiceTest {
 	public void invalidConfigurationFile() {
 
 		try {
-			GluuBootstrapConfigService service = new GluuBootstrapConfigServiceImpl(INVALID_CONFIG_FILENAME);
+			GluuRadiusBootstrapConfigService service = new GluuRadiusBootstrapConfigServiceImpl(INVALID_CONFIG_FILENAME);
 		}catch(GluuRadiusServiceException e) {
 			assertEquals("Missing salt file name",e.getMessage());
 		}
@@ -61,24 +61,21 @@ public class GluuBootstrapConfigServiceTest {
 	@Test
 	public void validConfigurationFile() {
 
-		GluuBootstrapConfigService service = new GluuBootstrapConfigServiceImpl(VALID_CONFIG_FILENAME);
-		LdapConfiguration ldapconfig  = service.getLdapConfiguration();
+		GluuRadiusBootstrapConfigService service = new GluuRadiusBootstrapConfigServiceImpl(VALID_CONFIG_FILENAME);
+		GluuRadiusBootstrapConfig config  = service.getBootstrapConfiguration();
 
 		Integer port = 1636;
-		Integer boundcpsize = 1;
-		Integer unboundcpsize = 10;
-		assertEquals("localhost",ldapconfig.getHostname());
-		assertEquals(port,ldapconfig.getPort());
-		assertEquals("cn=directory manager",ldapconfig.getBindDn());
-		assertEquals("gluu",ldapconfig.getPassword());
-		assertEquals(true,ldapconfig.getSslEnabled());
+		Integer cpsize = 10;
+		assertEquals("localhost",config.getHostname());
+		assertEquals(port,config.getPort());
+		assertEquals("cn=directory manager",config.getBindDn());
+		assertEquals("gluu",config.getPassword());
+		assertEquals(true,config.getSslEnabled());
 
-		assertEquals("/etc/certs/opendj.pkcs12",ldapconfig.getTrustStoreFile());
-		assertEquals("Agtyc0lLNwuC",ldapconfig.getTrustStorePin());
-		assertEquals("pkcs12",ldapconfig.getTrustStoreFormat());
-		assertEquals(true,ldapconfig.getSslVerifyEnabled());
-		assertEquals(boundcpsize,ldapconfig.getConnPoolConfig().getBoundCpSize());
-		assertEquals(unboundcpsize,ldapconfig.getConnPoolConfig().getUnboundCpSize());
-
+		assertEquals("/etc/certs/opendj.pkcs12",config.getTrustStoreFile());
+		assertEquals("Agtyc0lLNwuC",config.getTrustStorePin());
+		assertEquals("pkcs12",config.getTrustStoreFormat());
+		assertEquals(true,config.getSslVerifyEnabled());
+		assertEquals(cpsize,config.getConnPoolConfig().getConnPoolSize());
 	}
 }
