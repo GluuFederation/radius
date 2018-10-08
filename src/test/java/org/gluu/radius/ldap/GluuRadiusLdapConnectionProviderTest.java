@@ -1,7 +1,7 @@
 package org.gluu.radius.ldap;
 
-import org.gluu.radius.config.LdapConfiguration;
-import org.gluu.radius.services.impl.GluuBootstrapConfigServiceImpl; // not optimal
+import org.gluu.radius.config.GluuRadiusBootstrapConfig;
+import org.gluu.radius.services.impl.GluuRadiusBootstrapConfigServiceImpl; // not optimal
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -14,7 +14,7 @@ public class GluuRadiusLdapConnectionProviderTest {
 	public void unableToConnectToLdapHost() {
 
 		try {
-			LdapConfiguration config = getUnreachableHostLdapConfig();
+			GluuRadiusBootstrapConfig config = getUnreachableHostBootstrapConfig();
 			GluuRadiusLdapConnectionProvider provider = new GluuRadiusLdapConnectionProvider(config);
 			fail("Expected GluuRadiusLdapException not thrown");
 		}catch(GluuRadiusLdapException e) {
@@ -26,7 +26,7 @@ public class GluuRadiusLdapConnectionProviderTest {
 	public void validConnection () {
 
 		try {
-			LdapConfiguration config = getValidLdapConnection();
+			GluuRadiusBootstrapConfig config = getValidBootstrapConfig();
 			GluuRadiusLdapConnectionProvider provider = new GluuRadiusLdapConnectionProvider(config);
 		}catch(GluuRadiusLdapException e) {
 			assertEquals("Could not create secured ldap connection",e.getMessage());
@@ -36,9 +36,9 @@ public class GluuRadiusLdapConnectionProviderTest {
 	}
 
 
-	private LdapConfiguration getUnreachableHostLdapConfig() {
+	private GluuRadiusBootstrapConfig getUnreachableHostBootstrapConfig() {
 
-		LdapConfiguration config = new LdapConfiguration();
+		GluuRadiusBootstrapConfig config = new GluuRadiusBootstrapConfig();
 		config.setHostname("host.unknown");
 		config.setPort(5555);
 		config.setBindDn("");
@@ -47,12 +47,12 @@ public class GluuRadiusLdapConnectionProviderTest {
 	}
 
 
-	private LdapConfiguration getValidLdapConnection() {
+	private GluuRadiusBootstrapConfig getValidBootstrapConfig() {
 
 		String configfile = "ldap-test-server.properties";
 		// this isn't optimal
 		// replace later with a factory or a service provider
-		GluuBootstrapConfigServiceImpl cfgservice = new GluuBootstrapConfigServiceImpl(configfile);
-		return cfgservice.getLdapConfiguration();
+		GluuRadiusBootstrapConfigServiceImpl cfgservice = new GluuRadiusBootstrapConfigServiceImpl(configfile);
+		return cfgservice.getBootstrapConfiguration();
 	}
 }

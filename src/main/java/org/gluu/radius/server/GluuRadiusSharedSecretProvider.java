@@ -1,6 +1,6 @@
 package org.gluu.radius.server;
 
 
-public interface SharedSecretProvider {
+public interface GluuRadiusSharedSecretProvider {
 	public String getSharedSecret(String ipaddress);
 }

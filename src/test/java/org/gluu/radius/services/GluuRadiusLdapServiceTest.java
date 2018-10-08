@@ -3,11 +3,16 @@ package org.gluu.radius.services;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.gluu.radius.config.LdapConfiguration;
+import org.gluu.radius.config.GluuRadiusBootstrapConfig;
+import org.gluu.radius.config.GluuRadiusOpenIdConfig;
+import org.gluu.radius.config.GluuRadiusServerConfig;
+import org.gluu.radius.config.GluuRadiusClientConfig;
+import org.gluu.radius.config.GluuRadiusCacheConfig;
 import org.gluu.radius.ldap.GluuRadiusLdapConnectionProvider;
-import org.gluu.radius.services.impl.GluuBootstrapConfigServiceImpl;
+import org.gluu.radius.services.impl.GluuRadiusBootstrapConfigServiceImpl;
 import org.gluu.radius.services.impl.GluuRadiusLdapServiceImpl;
 
 public class GluuRadiusLdapServiceTest  {
@@ -21,71 +26,69 @@ public class GluuRadiusLdapServiceTest  {
 	private static final Integer RADIUS_AUTH_PORT = 1234;
 	private static final Integer RADIUS_ACCT_PORT = 1235;
 
-	private static final String TEST_CLIENT_1_IP_ADDRESS =  "192.168.1.10";
-	private static final String TEST_CLIENT_1_SECRET = "gluu";
+	private static final String OPENID_APPLIANCE_URL = "https://gluu.intranet.yems.group";
+	private static final String OPENID_CLIENT_ID = "@!392F.C4B0.C2E8.191F!0001!28CF.5FED!0008!9015.F5F1.857B.21FE";
+	private static final String OPENID_CLIENT_SECRET = "mHtydyUwOFo=";
+	private static final Integer OPENID_HTTP_CONNPOOL_SIZE = 10;
+	private static final Boolean OPENID_HTTP_SSL_VERIFY_ENABLED = false;
 
-	private static final String TEST_CLIENT_2_IP_ADDRESS = "192.168.1.11";
-	private static final String TEST_CLIENT_2_SECRET = "Agtyc0lLNwuC";
+	private static final String RADIUS_CLIENT_IP_ADDRESS = "192.168.1.11";
+	private static final String RADIUS_CLIENT_NAME = "test_client_2";
+	private static final String RADIUS_CLIENT_SECRET = "FX7Wm87SNeCC8BmyWtOjcg==";
+
+	private static final Integer RADIUS_CLIENT_CACHE_INTERVAL = 2000; // ms 
 
 	private GluuRadiusLdapService ldapservice;
 
 
 	public GluuRadiusLdapServiceTest() {
 
-		GluuBootstrapConfigService configservice = new GluuBootstrapConfigServiceImpl(TEST_SERVER_CONFIG_FILE);
-		LdapConfiguration ldapconfig = configservice.getLdapConfiguration();
-		GluuRadiusLdapConnectionProvider connprovider = new GluuRadiusLdapConnectionProvider(ldapconfig);
+		GluuRadiusBootstrapConfigService configservice = new GluuRadiusBootstrapConfigServiceImpl(TEST_SERVER_CONFIG_FILE);
+		GluuRadiusBootstrapConfig config = configservice.getBootstrapConfiguration();
+		GluuRadiusLdapConnectionProvider connprovider = new GluuRadiusLdapConnectionProvider(config);
 		String encryptionkey = configservice.getEncryptionKey();
-		ldapservice = new GluuRadiusLdapServiceImpl(encryptionkey,connprovider);
-	}
-
-	@Test
-	public void validUserCredentials() {
-
-		if(ldapservice.verifyUserCredentials(VALID_USERNAME,VALID_PASSWORD) == false) {
-			fail("User credentials validation failed");
-		} 
-	}
-
-	@Test
-	public void invalidUserCredentials() {
-
-		try {
-			if(ldapservice.verifyUserCredentials(INVALID_USERNAME,INVALID_PASSWORD) == true) {
-				fail("Expected credential validation to fail. User authenticated");
-			}
-		}catch(GluuRadiusServiceException e) {
-			
-		}
+		ldapservice = new GluuRadiusLdapServiceImpl(connprovider);
 	}
 
 
 	@Test
-	public void testGetRadiusListenAddress() {
+	public void validRadiusServerConfig() {
 
-		assertEquals(RADIUS_LISTEN_ADDRESS,ldapservice.getRadiusListenAddress());
-	}
-
-	@Test
-	public void testGetRadiusAuthenticationPort() {
-
-		assertEquals(RADIUS_AUTH_PORT,ldapservice.getRadiusAuthenticationPort());
+		GluuRadiusServerConfig config = ldapservice.getRadiusServerConfig();
+		assertEquals(RADIUS_LISTEN_ADDRESS,config.getListenAddress());
+		assertEquals(RADIUS_AUTH_PORT,config.getAuthPort());
+		assertEquals(RADIUS_ACCT_PORT,config.getAcctPort());
 	}
 
 
 	@Test
-	public void testGetRadiusAccountingPort() {
+	public void validRadiusOpenIdConfig() {
 
-		assertEquals(RADIUS_ACCT_PORT,ldapservice.getRadiusAccountingPort());
-
+		GluuRadiusOpenIdConfig config = ldapservice.getRadiusOpenIdConfig();
+		assertEquals(OPENID_APPLIANCE_URL,config.getApplianceUrl());
+		assertEquals(OPENID_CLIENT_ID,config.getClientId());
+		assertEquals(OPENID_CLIENT_SECRET,config.getClientSecret());
+		assertEquals(OPENID_HTTP_CONNPOOL_SIZE,config.getCpSize());
+		assertEquals(OPENID_HTTP_SSL_VERIFY_ENABLED,config.getSslVerifyEnabled());
 	}
 
 
 	@Test
-	public void testGetClientSharedSecret() {
+	public void validClientConfig() {
 
-		assertEquals(TEST_CLIENT_1_SECRET,ldapservice.getClientSharedSecret(TEST_CLIENT_1_IP_ADDRESS));
-		assertEquals(TEST_CLIENT_2_SECRET,ldapservice.getClientSharedSecret(TEST_CLIENT_2_IP_ADDRESS));
+		GluuRadiusClientConfig config = ldapservice.getRadiusClientConfig(RADIUS_CLIENT_IP_ADDRESS);
+		assertEquals(RADIUS_CLIENT_NAME,config.getName());
+		assertEquals(RADIUS_CLIENT_SECRET,config.getSecret());
+		assertEquals(RADIUS_CLIENT_IP_ADDRESS,config.getIpAddress());
+	}
+
+
+	@Test
+	public void validClientCacheConfig() {
+
+		GluuRadiusCacheConfig config = ldapservice.getRadiusClientCacheConfig();
+		assertEquals(RADIUS_CLIENT_CACHE_INTERVAL,config.getCacheInterval());
+		assertTrue(config.isNormalPolicy());
 	}
 
 }

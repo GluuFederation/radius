@@ -1,10 +1,14 @@
 package org.gluu.radius.services;
 
+import org.gluu.radius.config.GluuRadiusOpenIdConfig;
+import org.gluu.radius.config.GluuRadiusServerConfig;
+import org.gluu.radius.config.GluuRadiusClientConfig;
+import org.gluu.radius.config.GluuRadiusCacheConfig;
 
 public interface GluuRadiusLdapService {
-	public boolean verifyUserCredentials(String username,String password);
-	public String  getRadiusListenAddress();
-	public Integer getRadiusAuthenticationPort();
-	public Integer getRadiusAccountingPort();
-	public String  getClientSharedSecret(String ipaddress);
+	
+	public GluuRadiusServerConfig getRadiusServerConfig();
+	public GluuRadiusOpenIdConfig  getRadiusOpenIdConfig();
+	public GluuRadiusClientConfig getRadiusClientConfig(String ipaddress);
+	public GluuRadiusCacheConfig  getRadiusClientCacheConfig();
 }

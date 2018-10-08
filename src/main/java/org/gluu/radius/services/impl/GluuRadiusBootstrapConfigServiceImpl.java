@@ -6,20 +6,19 @@ import java.util.Properties;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.gluu.radius.config.LdapConfiguration;
+import org.gluu.radius.config.GluuRadiusBootstrapConfig;
 import org.gluu.radius.util.CryptoUtil;
 import org.gluu.radius.util.PropertyUtil;
-import org.gluu.radius.services.GluuBootstrapConfigService;
+import org.gluu.radius.services.GluuRadiusBootstrapConfigService;
 import org.gluu.radius.services.GluuRadiusServiceException;
 
 
-public class GluuBootstrapConfigServiceImpl implements GluuBootstrapConfigService {
+public class GluuRadiusBootstrapConfigServiceImpl implements GluuRadiusBootstrapConfigService {
 
 	
 	private static final String RADIUS_CONFIG_SALT_KEY = "radius.config.salt";
 	private static final String RADIUS_CONFIG_OXLDAP_KEY = "radius.config.oxldap";
-	private static final String RADIUS_LDAP_UNBOUNDCP_SIZE_KEY = "radius.ldap.cpool.unbound.size";
-	private static final String RADIUS_LDAP_BOUNDCP_SIZE_KEY = "radius.ldap.cpool.bound.size";
+	private static final String RADIUS_LDAP_CPOOL_SIZE_KEY = "radius.ldap.cpool.size";
 	private static final String RADIUS_LDAP_VERIFYSSL_KEY = "radius.ldap.verifyssl";
 
 	private static final String ENCODE_SALT_KEY = "encodeSalt";
@@ -32,14 +31,11 @@ public class GluuBootstrapConfigServiceImpl implements GluuBootstrapConfigServic
 	private static final String SSL_TRUSTSTORE_PIN_KEY   = "ssl.trustStorePin";
 	private static final String SSL_TRUSTSTORE_FORMAT_KEY = "ssl.trustStoreFormat";
 
-	private static final String OXRADIUS_CONFIG_ENTRY_DN_KEY = "oxradius_ConfigurationEntryDN";
-	private static final String PEOPLE_CONFIG_ENTRY_DN_KEY  ="gluu.server.peopleConfigurationEntryDN";
-
 	private String salt; // encryption/decryption key
 	private Properties primaryconfig;
 	private Properties oxldapconfig;
 
-	public GluuBootstrapConfigServiceImpl(String configfile) {
+	public GluuRadiusBootstrapConfigServiceImpl(String configfile) {
 
 		if(configfile == null)
 			throw new GluuRadiusServiceException("Missing configuration filename");
@@ -62,9 +58,9 @@ public class GluuBootstrapConfigServiceImpl implements GluuBootstrapConfigServic
 	}
 
 	@Override
-	public LdapConfiguration getLdapConfiguration() {
+	public GluuRadiusBootstrapConfig getBootstrapConfiguration() {
 
-		LdapConfiguration config = new LdapConfiguration();
+		GluuRadiusBootstrapConfig config = new GluuRadiusBootstrapConfig();
 		String servers = PropertyUtil.getStringProperty(oxldapconfig,SERVERS_KEY);
 		if(servers == null)
 			throw new GluuRadiusServiceException("Could not find servers entry in config");
@@ -95,17 +91,10 @@ public class GluuBootstrapConfigServiceImpl implements GluuBootstrapConfigServic
 		config.setSslVerifyEnabled(PropertyUtil.getBooleanProperty(primaryconfig,RADIUS_LDAP_VERIFYSSL_KEY));
 
 		// conn pool 
-		Integer boundcpsize = PropertyUtil.getIntProperty(primaryconfig,RADIUS_LDAP_BOUNDCP_SIZE_KEY);
-		Integer unboundcpsize = PropertyUtil.getIntProperty(primaryconfig,RADIUS_LDAP_UNBOUNDCP_SIZE_KEY);
-		config.getConnPoolConfig().setBoundCpSize(boundcpsize);
-		config.getConnPoolConfig().setUnboundCpSize(unboundcpsize);
+		Integer cpsize = PropertyUtil.getIntProperty(primaryconfig,RADIUS_LDAP_CPOOL_SIZE_KEY);
+		config.getConnPoolConfig().setConnPoolSize(cpsize);
 
-		// DNs 
-		String radiusconfigentrydn = PropertyUtil.getStringProperty(oxldapconfig,OXRADIUS_CONFIG_ENTRY_DN_KEY);
-		String peopleconfigentrydn = PropertyUtil.getStringProperty(primaryconfig,PEOPLE_CONFIG_ENTRY_DN_KEY);
-		config.setRadiusConfigEntryDn(radiusconfigentrydn);
-		config.setPeopleConfigEntryDn(peopleconfigentrydn);
-		
+
 		return config;
 	}
 

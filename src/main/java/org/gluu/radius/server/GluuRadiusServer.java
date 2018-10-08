@@ -1,119 +1,89 @@
 package org.gluu.radius.server;
 
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import org.apache.log4j.Logger;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-import org.gluu.radius.server.AccessRequestContext;
-import org.gluu.radius.server.AccountingRequestFilter;
-import org.gluu.radius.server.impl.TinyRadiusServer;
+import org.gluu.radius.GluuRadiusException;
 
-public class GluuRadiusServer {
-	
-	private TinyRadiusServer serverimpl;
-	private SharedSecretProvider ssprovider;
-	private List<AccessRequestFilter> accessfilters;
-	private List<AccountingRequestFilter> accountingfilters;
+public abstract class GluuRadiusServer {
+
+	private static final Logger logger = Logger.getLogger(GluuRadiusServer.class);
+
+	protected GluuRadiusSharedSecretProvider ssprovider;
+	protected List<GluuRadiusAccessRequestFilter> accessrequestfilters;
+	protected List<GluuRadiusAccountingRequestFilter> accountingrequestfilters;
 
 	public GluuRadiusServer() {
 
-		serverimpl = new TinyRadiusServer(this);
-		ssprovider = null;
-		accessfilters = new ArrayList<AccessRequestFilter>();
-		accountingfilters = new ArrayList<AccountingRequestFilter>();
+		this.ssprovider = null;
+		this.accessrequestfilters = new ArrayList<GluuRadiusAccessRequestFilter>();
+		this.accountingrequestfilters = new ArrayList<GluuRadiusAccountingRequestFilter>();
 	}
 
+	public GluuRadiusServer addAccessRequestFilter(GluuRadiusAccessRequestFilter filter) {
 
-	public GluuRadiusServer setAccountingPort(Integer port) {
-
-		try {
-			serverimpl.setAcctPort(port);
-		}catch(IllegalArgumentException ie) {
-			throw new GluuRadiusServerException("Invalid accounting port value specified",ie);
-		}
-		return this;
-	}
-
-	public GluuRadiusServer setAuthenticationPort(Integer port) {
-
-		try {
-			serverimpl.setAuthPort(port);
-		}catch(IllegalArgumentException ie) {
-			throw new GluuRadiusServerException("Invalid authentication port value specified",ie);
-		}
+		if(filter!=null)
+			accessrequestfilters.add(filter);
 		return this;
 	}
 
 
-	public GluuRadiusServer setListenAddress(String hostname) {
+	public GluuRadiusServer addAccountingRequestFilter(GluuRadiusAccountingRequestFilter filter) {
 
-		try {
-			serverimpl.setListenAddress(InetAddress.getByName(hostname));
-		}catch(UnknownHostException ue) {
-			throw new GluuRadiusServerException("Hostname resolution failed for listen address",ue);
-		}catch(SecurityException se) {
-			throw new GluuRadiusServerException("Operation not allowed due to security restrictions",se);
-		}
+		if(filter!=null)
+			accountingrequestfilters.add(filter);
 		return this;
 	}
 
-
-	public GluuRadiusServer setSharedSecretProvider(SharedSecretProvider ssprovider) {
+	public GluuRadiusServer setSharedSecretProvider(GluuRadiusSharedSecretProvider ssprovider) {
 
 		this.ssprovider = ssprovider;
 		return this;
 	}
 
-	public String getSharedSecret(String ipaddress) {
-
-		return ssprovider.getSharedSecret(ipaddress);
-	}
-
-
-	public GluuRadiusServer start() {
-
-		serverimpl.start(true,true);
-		return this;
-	}
-
-	public GluuRadiusServer stop() {
-
-		serverimpl.stop();
-		return this;
-	}
-
-
-	public GluuRadiusServer addAccessRequestFilter(AccessRequestFilter filter) {
-
-		accessfilters.add(filter);
-		return this;
-	}
-
-	public boolean processAccessRequest(AccessRequestContext context) {
+	protected boolean onAccessRequest(GluuRadiusAccessRequestContext context) {
 
 		boolean ret = false;
-		for(AccessRequestFilter filter : accessfilters) {
-			if(filter.processAccessRequest(context) == true) {
-				ret = true;
-				break;
+		try {
+			for(GluuRadiusAccessRequestFilter arfilter : accessrequestfilters) {
+				if(arfilter.processAccessRequest(context) == true) {
+					ret =  true;
+					break;
+				}
 			}
+		}catch(GluuRadiusException e) {
+			logger.warn("Exception caught when processing access request by filters",e);
 		}
 		return ret;
 	}
 
-	public void processAccountingRequest(AccountingRequestContext context) {
 
-		for(AccountingRequestFilter filter : accountingfilters) {
-			filter.processAccountingRequest(context);
+	protected void onAccountingRequest(GluuRadiusAccountingRequestContext context) {
+
+		try {
+			for(GluuRadiusAccountingRequestFilter acfilter : accountingrequestfilters) {
+				acfilter.processAccountingRequest(context);
+			}
+		}catch(GluuRadiusException e) {
+			logger.warn("Exception caught when processing accounting request by filters",e);
 		}
 	}
 
-	public GluuRadiusServer addAccountingRequestFilter(AccountingRequestFilter filter) {
 
-		accountingfilters.add(filter);	
-		return this;
+	protected String getSharedSecret(String ipaddress) {
+
+		String secret = null;
+		try {
+			secret = ssprovider.getSharedSecret(ipaddress);
+		}catch(GluuRadiusException e) {
+			logger.warn("Exception caught when getting client shared secret "+ipaddress,e);
+		}
+		return secret;
 	}
+
+
+	public abstract GluuRadiusServer run();
+	public abstract GluuRadiusServer shutdown();
 }

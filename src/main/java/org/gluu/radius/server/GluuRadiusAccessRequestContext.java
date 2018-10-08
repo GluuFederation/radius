@@ -1,7 +1,7 @@
 package org.gluu.radius.server;
 
 
-public interface AccessRequestContext extends RequestContext {
+public interface GluuRadiusAccessRequestContext extends GluuRadiusRequestContext {
 	
 	public String getUsername();
 	public String getPassword();

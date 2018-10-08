@@ -1,12 +1,12 @@
-package org.gluu.radius.server.impl;
+package org.gluu.radius.server.impl.tinyradius;
 
 import java.net.InetSocketAddress;
 
-import org.gluu.radius.server.RequestContext;
+import org.gluu.radius.server.GluuRadiusRequestContext;
 import org.tinyradius.packet.RadiusPacket;
 
 
-public class TinyRadiusRequestContext implements RequestContext {
+public class TinyRadiusRequestContext implements GluuRadiusRequestContext {
 
 	private  InetSocketAddress client; 
 	protected RadiusPacket packet;
