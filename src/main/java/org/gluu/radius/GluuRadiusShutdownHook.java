@@ -16,6 +16,7 @@ public class GluuRadiusShutdownHook extends Thread {
 	@Override
 	public void run() {
 
+		logger.info("Stopping Super Gluu Radius");
 		runner.stopServer();
 	}
 }
