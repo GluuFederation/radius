@@ -21,8 +21,8 @@ JVM_ARGS=
 # user and group under which Gluu Radius 
 # will run
 #####################################################
-GLUU_RADIUS_USER=gluuradius
-GLUU_RADIUS_GROUP=gluuradius
+GLUU_RADIUS_USER=<user>
+GLUU_RADIUS_GROUP=<group>
 
 #####################################################
 # Gluu Radius PID file directory
@@ -33,19 +33,19 @@ GLUU_RADIUS_PID_DIR=/var/run
 # Gluu Radius Installation Directory
 # This will be our working directory
 #####################################################
-GLUU_RADIUS_INSTALL_DIR=/opt/gluu/radius
+GLUU_RADIUS_INSTALL_DIR=<install_dir>
 
 #####################################################
 # Gluu Radius lib (jar) directory
 # This directory is relative to the installation 
 # directory
 #####################################################
-GLUU_RADIUS_LIB_DIR=lib
+GLUU_RADIUS_LIB_DIR=<lib_dir>
 
 #####################################################
 # Gluu Radius Configuration Directory
 #####################################################
-GLUU_RADIUS_CONFIG_DIR=/etc/gluu/conf
+GLUU_RADIUS_CONFIG_DIR=<config_dir>
 
 
 #####################################################
@@ -74,18 +74,18 @@ GLUU_RADIUS_SHUTDOWN_TIME=10
 #####################################################
 # Gluu Radius application configuration file
 #####################################################
-GLUU_RADIUS_APP_CONFIG=$GLUU_RADIUS_CONFIG_DIR/gluu-radius.properties
+GLUU_RADIUS_APP_CONFIG=$GLUU_RADIUS_CONFIG_DIR/ox-radius.properties
 
 #####################################################
 #  Gluu Radius log4j configuration file 
 #####################################################
-GLUU_RADIUS_LOG4J_CONFIG=$GLUU_RADIUS_CONFIG_DIR/gluu-radius-log4j.properties
+GLUU_RADIUS_LOG4J_CONFIG=$GLUU_RADIUS_CONFIG_DIR/ox-radius-logging.properties
 
 #####################################################
 # Gluu Radius jar file 
 # Change this to reflect version bumps
 #####################################################
-GLUU_RADIUS_JAR=super-gluu-radius-1.0-SNAPSHOT.jar
+GLUU_RADIUS_JAR=<gluu_radius_jar>
 
 #####################################################
 # Gluu Radius main class (Java)
@@ -101,6 +101,5 @@ GLUU_RADIUS_JAVA_MAIN=org.gluu.radius.GluuRadius
 GLUU_RADIUS_LOG4J_PROPS="-Dlog4j.configuration=file:$GLUU_RADIUS_LOG4J_CONFIG"
 GLUU_RADIUS_INIT_PROPS="-Dradius.wait_timeout=$GLUU_RADIUS_WAIT_TIMEOUT -Dradius.retrycount=$GLUU_RADIUS_RETRY_COUNT"
 GLUU_RADIUS_PROPS="$GLUU_RADIUS_LOG4J_PROPS $GLUU_RADIUS_INIT_PROPS"
-GLUU_RADIUS_CLASSPATH="-cp $GLUU_RADIUS_JAR:lib/*"
+GLUU_RADIUS_CLASSPATH="-cp $GLUU_RADIUS_JAR:$GLUU_RADIUS_LIB_DIR/*"
 GLUU_RADIUS_OPTS="$JVM_OPTS $GLUU_RADIUS_PROPS $GLUU_RADIUS_CLASSPATH $GLUU_RADIUS_JAVA_MAIN $GLUU_RADIUS_APP_CONFIG"
-
