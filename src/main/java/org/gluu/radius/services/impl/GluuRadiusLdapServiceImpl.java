@@ -61,10 +61,10 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 	private static final String OXRADIUS_HTTP_SSLVERIFY_ATTRIBUTE_NAME = "oxRadiusHttpSslVerify";
 
 	private static final String OXRADIUS_DEFAULT_LISTEN_IP_ADDRESS = "0.0.0.0"; // all interfaces 
-	private static final String OXRADIUS_DEFAULT_ACCOUNTING_PORT = "1812";
-	private static final String OXRADIUS_DEFAULT_AUTHENTICATION_PORT = "1813";
+	private static final String OXRADIUS_DEFAULT_ACCOUNTING_PORT = "1813";
+	private static final String OXRADIUS_DEFAULT_AUTHENTICATION_PORT = "1812";
 	private static final String OXRADIUS_DEFAULT_CLIENT_CONFIG="{\"clients\":[]}";
-	private static final String OXRADIUS_DEFAULT_CLIENT_DISPLAY_NAME="oxRadius";
+	private static final String OXRADIUS_DEFAULT_CLIENT_DISPLAY_NAME="oxRadius Authentication Client";
 	private static final String OXRADIUS_DEFAULT_HTTP_CPOOL_SIZE="10";
 	private static final String OXRADIUS_DEFAULT_CLIENT_CACHE_DURATION="-1"; // caching disabled
 	private static final String OXRADIUS_DEFAULT_HTTPSSLVERIFY="true"; 

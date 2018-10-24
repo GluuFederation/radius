@@ -55,8 +55,8 @@ add: objectClasses
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.51 NAME 'oxRadiusConfiguration'
    SUP ( top )
    STRUCTURAL
-   MUST ( objectClass $ oxRadiusListenIpAddress $ oxRadiusAuthenticationPort $ oxRadiusAccountingPort $ oxRadiusClientConfig $ 
+   MUST ( objectClass )
+   MAY  ( ou $ oxRadiusListenIpAddress $ oxRadiusAuthenticationPort $ oxRadiusAccountingPort $ oxRadiusClientConfig $ 
           oxRadiusOpenIdClientName $ oxRadiusHttpConnPoolSize $ oxRadiusClientCacheDuration $ oxRadiusHttpSslVerify )
-   MAY  ( ou )
    X-ORIGIN 'Gluu created objectClass' )
 
