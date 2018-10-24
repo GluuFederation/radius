@@ -1,10 +1,12 @@
 package org.gluu.radius.services.impl;
 
+import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchResultListener;
 import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 
 import java.io.IOException;
@@ -32,10 +34,13 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 	private static final String OBJECTCLASS_ATTRIBUTE_NAME = "objectClass";
 	private static final String GLUUPERSON_OBJECTCLASS = "gluuPerson";
 	private static final String GLUUCUSTOMPERSON_OBJECTCLASS = "gluuCustomPerson";
+	private static final String ORGANIZATIONALUNIT_OBJECTCLASS = "organizationalUnit";
+	private static final String TOP_OBJECTCLASS = "top";
 	private static final String GLUU_BASE_DN = "o=gluu";
 	private static final String APPLIANCES_BASE_DN = "ou=appliances,o=gluu";
 	private static final String ORGANIZATION_UNIT_ATTRIBUTE_NAME = "ou";
 	private static final String OXTRUST_ORGANIZATION_UNIT_ATTRIBUTE_VALUE = "oxtrust";
+	private static final String CONFIGROOT_ORGANIZATION_UNIT_ATTRIBUTE_NAME = "configuration";
 	private static final String OXTRUST_CONFIGURATION_OBJECTCLASS = "oxTrustConfiguration";
 	private static final String OXTRUST_CONFIGURATION_ATTRIBUTE_NAME = "oxTrustConfApplication";
 	private static final String OXRADIUS_CONFIGURATION_OBJECTCLASS = "oxRadiusConfiguration";
@@ -44,6 +49,8 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 	private static final String OXAUTH_CLIENT_SECRET_ATTRIBUTE_NAME = "oxAuthClientSecret";
 	private static final String OXAUTH_CLIENT_INUM_ATTRIBUTE_NAME = "inum";
 
+	private static final String OXRADIUS_RDN = "ou=oxradius";
+	private static final String OXRADIUS_ORGANIZATION_UNIT="oxradius";
 	private static final String OXRADIUS_LISTEN_IP_ADDRESS_ATTRIBUTE_NAME = "oxRadiusListenIpAddress";
 	private static final String OXRADIUS_ACCOUNTING_PORT_ATTRIBUTE_NAME = "oxRadiusAccountingPort";
 	private static final String OXRADIUS_AUTHENTICATION_PORT_ATTRIBUTE_NAME = "oxRadiusAuthenticationPort";
@@ -53,6 +60,15 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 	private static final String OXRADIUS_CLIENT_CACHE_DURATION_ATTRIBUTE_NAME = "oxRadiusClientCacheDuration";
 	private static final String OXRADIUS_HTTP_SSLVERIFY_ATTRIBUTE_NAME = "oxRadiusHttpSslVerify";
 
+	private static final String OXRADIUS_DEFAULT_LISTEN_IP_ADDRESS = "0.0.0.0"; // all interfaces 
+	private static final String OXRADIUS_DEFAULT_ACCOUNTING_PORT = "1813";
+	private static final String OXRADIUS_DEFAULT_AUTHENTICATION_PORT = "1812";
+	private static final String OXRADIUS_DEFAULT_CLIENT_CONFIG="{\"clients\":[]}";
+	private static final String OXRADIUS_DEFAULT_CLIENT_DISPLAY_NAME="oxRadius Authentication Client";
+	private static final String OXRADIUS_DEFAULT_HTTP_CPOOL_SIZE="10";
+	private static final String OXRADIUS_DEFAULT_CLIENT_CACHE_DURATION="-1"; // caching disabled
+	private static final String OXRADIUS_DEFAULT_HTTPSSLVERIFY="true"; 
+
 	private static final Integer CACHE_DURATION_CACHE_DISABLED =  -1;
 	private static final Integer CACHE_DURATION_CACHE_NO_EXPIRY =  0; 
 
@@ -61,6 +77,7 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 	public GluuRadiusLdapServiceImpl(GluuRadiusLdapConnectionProvider connprovider) {
 
 		this.connprovider = connprovider;
+		oxRadiusConfigurationInit();
 	}
 
 
@@ -148,6 +165,61 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 			if(conn != null)
 				conn.release();
 		}
+	}
+
+
+	private void oxRadiusConfigurationInit() {
+
+		GluuRadiusLdapConnection conn = null;
+		try {
+			conn  = connprovider.getConnection();
+			SearchRequest request = buildoxRadiusConfigurationSearchRequest(
+				OXRADIUS_LISTEN_IP_ADDRESS_ATTRIBUTE_NAME,
+				OXRADIUS_AUTHENTICATION_PORT_ATTRIBUTE_NAME,
+				OXRADIUS_ACCOUNTING_PORT_ATTRIBUTE_NAME,
+				OXRADIUS_CLIENT_CONFIG_ATTRIBUTE_NAME,
+				OXRADIUS_CLIENT_DISPLAY_NAME_ATTRIBUTE_NAME,
+				OXRADIUS_HTTP_CPOOL_SIZE_ATTRIBUTE_NAME,
+				OXRADIUS_CLIENT_CACHE_DURATION_ATTRIBUTE_NAME,
+				OXRADIUS_HTTP_SSLVERIFY_ATTRIBUTE_NAME);
+			SearchResultEntry entry = conn.getConnection().searchForEntry(request);
+			if(entry == null)
+				oxRadiusConfigurationCreate(conn);
+		}catch(GluuRadiusLdapException e) {
+			throw new GluuRadiusServiceException("LDAP Operation failed",e);
+		}catch(LDAPSearchException e) {
+			throw new GluuRadiusServiceException("LDAP Search Operation Failed",e);
+		}catch(LDAPException e)  {
+			throw new GluuRadiusServiceException("A generic LDAP operation failed",e);
+		}finally {
+			if(conn != null)
+				conn.release();
+		}
+	}
+
+	private void oxRadiusConfigurationCreate(GluuRadiusLdapConnection conn) throws LDAPException {
+
+		SearchRequest request = buildConfigRootSearchRequest();
+		SearchResultEntry entry = conn.getConnection().searchForEntry(request);
+		if(entry == null)
+			throw new GluuRadiusServiceException("Config root not found on LDAP server");
+		String radiusconfigdn = OXRADIUS_RDN + "," + entry.getDN();
+		Entry radiusconfig = new Entry(radiusconfigdn);
+
+		radiusconfig.addAttribute(OBJECTCLASS_ATTRIBUTE_NAME,OXRADIUS_CONFIGURATION_OBJECTCLASS);
+		radiusconfig.addAttribute(OBJECTCLASS_ATTRIBUTE_NAME,TOP_OBJECTCLASS);
+		radiusconfig.addAttribute(ORGANIZATION_UNIT_ATTRIBUTE_NAME,OXRADIUS_ORGANIZATION_UNIT);
+
+		radiusconfig.addAttribute(OXRADIUS_LISTEN_IP_ADDRESS_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_LISTEN_IP_ADDRESS);
+		radiusconfig.addAttribute(OXRADIUS_AUTHENTICATION_PORT_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_AUTHENTICATION_PORT);
+		radiusconfig.addAttribute(OXRADIUS_ACCOUNTING_PORT_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_ACCOUNTING_PORT);
+		radiusconfig.addAttribute(OXRADIUS_CLIENT_CONFIG_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_CLIENT_CONFIG);
+		radiusconfig.addAttribute(OXRADIUS_CLIENT_DISPLAY_NAME_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_CLIENT_DISPLAY_NAME);
+		radiusconfig.addAttribute(OXRADIUS_HTTP_CPOOL_SIZE_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_HTTP_CPOOL_SIZE);
+		radiusconfig.addAttribute(OXRADIUS_CLIENT_CACHE_DURATION_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_CLIENT_CACHE_DURATION);
+		radiusconfig.addAttribute(OXRADIUS_HTTP_SSLVERIFY_ATTRIBUTE_NAME,OXRADIUS_DEFAULT_HTTPSSLVERIFY);
+
+		conn.getConnection().add(radiusconfig);
 	}
 
 	private GluuRadiusClientConfig fetchClientConfigFromServer(String ipaddress) {
@@ -278,6 +350,12 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 		return new SearchRequest(GLUU_BASE_DN,SearchScope.SUB,filter,attributes);
 	}
 
+	private SearchRequest buildConfigRootSearchRequest(String ... attributes) {
+
+		Filter filter = buildConfigRootSearchFilter();
+		return new SearchRequest(APPLIANCES_BASE_DN,SearchScope.SUB,filter,attributes);
+	}
+
 	private Filter buildUserSearchFilter(String username) {
 
 		Filter uidfilter = Filter.createEqualityFilter(UID_ATTRIBUTE_NAME,username);
@@ -305,6 +383,13 @@ public class GluuRadiusLdapServiceImpl implements GluuRadiusLdapService {
 		Filter oxauthclientobjfilter = Filter.createEqualityFilter(OBJECTCLASS_ATTRIBUTE_NAME,OXAUTH_CLIENT_OBJECTCLASS);
 		Filter displaynamefilter = Filter.createEqualityFilter(OXAUTH_CLIENT_DISPLAYNAME_ATTRIBUTE_NAME,displayname);
 		return Filter.createANDFilter(oxauthclientobjfilter,displaynamefilter);
+	}
+
+	private Filter buildConfigRootSearchFilter() {
+
+		Filter oufilter = Filter.createEqualityFilter(ORGANIZATION_UNIT_ATTRIBUTE_NAME,CONFIGROOT_ORGANIZATION_UNIT_ATTRIBUTE_NAME);
+		Filter ouobjclass = Filter.createEqualityFilter(OBJECTCLASS_ATTRIBUTE_NAME,ORGANIZATIONALUNIT_OBJECTCLASS);
+		return Filter.createANDFilter(oufilter,ouobjclass);
 	}
 	
 }

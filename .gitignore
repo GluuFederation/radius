@@ -148,3 +148,10 @@ buildNumber.properties
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
 
+# Gluu Radius specific entries
+
+# Don't copy the dependencies or keep commit their directories
+setup/*.jar
+setup/deps/
+setup/deps/*.jar
+
