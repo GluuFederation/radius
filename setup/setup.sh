@@ -374,12 +374,12 @@ if [ "$?" -ne 0 ]; then
 fi
 
 # copy logging configuration file
-copy_file "$SETUP_DIR/$GLUU_RADIUS_LOG_CONFIG_FILE" \
+copy_file "$SETUP_DIR/conf/$GLUU_RADIUS_LOG_CONFIG_FILE" \
           "$GLUU_RADIUS_CONFIG_DIR" "$GLUU_RADIUS_USER" "$GLUU_RADIUS_GROUP" "644"
 RET="$?"
 if [ "$?" -ne 0 ]; then
 	SETUP_DBG && echo "[error]"
-	SETUP_DBG && echo "Fatail. Operation failed with code $RET"
+	SETUP_DBG && echo "Fatal. Operation failed with code $RET"
 	rollback_all
 	exit 1
 fi
