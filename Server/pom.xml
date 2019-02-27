@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>super-gluu-radius-server</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <parent>
+    <groupId>org.gluu</groupId>
+    <artifactId>super-gluu-radius</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <name>Super Gluu Radius Server</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  <dependencies>
+    <!-- tinyradius -->
+    <dependency>
+      <groupId>com.hynnet</groupId>
+      <artifactId>tinyradius</artifactId>
+      <version>1.0</version>
+    </dependency>
+
+    <!-- oxcore-radius -->
+    <dependency>
+      <groupId>org.xdi</groupId>
+      <artifactId>oxcore-radius</artifactId>
+      <version>${oxcore.version}</version>
+    </dependency>
+
+    <!-- oxcore-ldap -->
+    <dependency>
+      <groupId>org.xdi</groupId>
+      <artifactId>oxcore-ldap</artifactId>
+      <version>${oxcore.version}</version>
+    </dependency>
+
+    <!-- oxcore-ldap-annotations -->
+    <dependency>
+      <groupId>org.xdi</groupId>
+      <artifactId>oxcore-ldap-annotations</artifactId>
+      <version>${oxcore.version}</version>
+    </dependency>
+
+    <!-- oxauth client -->
+    <dependency>
+      <groupId>org.xdi</groupId>
+      <artifactId>oxauth-client</artifactId>
+      <version>${oxauth.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.gluu</groupId>
+      <artifactId>oxauth-session-status</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <!-- apache log4j (scope provided so it doesn't end up in the classpath) -->
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    
+    <plugins>
+
+      <!-- compiler plugin -->
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.7.0</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>true</showDeprecation>
+          <compilerArgs>
+            <arg>-Xlint:all</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+
+      <!-- jar plugin -->
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.0.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>libs/</classpathPrefix>
+              <mainClass>org.gluu.radius.ServerEntry</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <!-- dependency plugin -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.1</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/libs</outputDirectory>
+              <overWriteReleases>true</overWriteReleases>
+              <!-- we don't need log4j 1.2.x in the output -->
+               <excludeArtifactIds>log4j</excludeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+
+  </build>
+</project>
