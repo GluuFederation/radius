@@ -1,9 +1,10 @@
 package org.gluu.radius;
 
 import java.io.IOException;
+import java.security.Security;
 
 import org.apache.log4j.Logger;
-
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.gluu.radius.exception.GenericLdapException;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.exception.ServerException;
@@ -39,6 +40,12 @@ public class ServerEntry {
 
         String appConfigFile = args[0];
         log.info("Application bootstrap configuration file: "+appConfigFile);
+
+        log.info("Initializing Security Components ... ");
+        if(!initSecurity()) {
+            log.error("Could not initialize security components");
+            System.exit(-1);
+        }
         
         log.info("Registering BootstrapConfigService ... ");
         if(!registerBootstrapConfigService(appConfigFile)) {
@@ -93,6 +100,12 @@ public class ServerEntry {
         log.info("+ Gluu Radius Server                                      +");
         log.info("+ Copyright (c) Gluu Inc.                                 +");
         log.info("+---------------------------------------------------------+");
+    }
+
+    private static final boolean initSecurity() {
+
+        Security.addProvider(new BouncyCastleProvider());
+        return true;
     }
 
     private static final boolean  registerBootstrapConfigService(String appConfigFile) {

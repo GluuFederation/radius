@@ -6,12 +6,17 @@ import java.util.Properties;
 
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.util.EncDecUtil;
+import org.xdi.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class BootstrapConfigService  {
 
     private enum BootstrapConfigKeys {
         SaltFile("radius.config.saltfile"),
-        LdapConfigFile("radius.config.oxldap");
+        LdapConfigFile("radius.config.oxldap"),
+        KeyStoreFile("radius.keyStoreFile"),
+        KeyStorePin("radius.keyStorePin"),
+        JwtAuthKeyId("radius.jwt.auth.keyId"),
+        JwtAuthSignatureAlgorithm("radius.jwt.auth.signAlgorithm");
 
         private String keyName;
 
@@ -34,6 +39,10 @@ public class BootstrapConfigService  {
 
     private String salt;
     private Properties oxLdapConfig;
+    private String keyStoreFile;
+    private String keyStorePin;
+    private String jwtAuthKeyId;
+    private SignatureAlgorithm jwtAuthSignAlgo;
 
     public BootstrapConfigService(String appConfigFile) { 
 
@@ -45,9 +54,16 @@ public class BootstrapConfigService  {
 
         this.salt = loadEncodeSalt(saltFile);
 
-        String ldapConfigFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.LdapConfigFile.getKeyName());
+        String ldapConfigFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.LdapConfigFile.getKeyName()); 
 
         this.oxLdapConfig = loadPropertiesFromFile(ldapConfigFile);
+
+        this.keyStoreFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.KeyStoreFile.getKeyName());
+        this.keyStorePin  = oxRadiusConfig.getProperty(BootstrapConfigKeys.KeyStorePin.getKeyName());
+
+        this.jwtAuthKeyId = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthKeyId.getKeyName());
+        String signalgo = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthSignatureAlgorithm.getKeyName());
+        this.jwtAuthSignAlgo = SignatureAlgorithm.fromString(signalgo);
     }
 
     public final String getEncodeSalt() {
@@ -73,6 +89,26 @@ public class BootstrapConfigService  {
     public final String getRadiusClientConfigDN() {
 
         return oxRadiusClientConfigRdn + "," + getRadiusConfigDN();
+    }
+
+    public final String getKeyStoreFile() {
+
+        return this.keyStoreFile;
+    }
+
+    public final String getKeyStorePin() {
+
+        return this.keyStorePin;
+    }
+
+    public final String getJwtAuthKeyId() {
+
+        return this.jwtAuthKeyId;
+    }
+
+    public final SignatureAlgorithm getJwtAuthSignAlgo() {
+
+        return this.jwtAuthSignAlgo;
     }
 
     private String loadEncodeSalt(String saltFile) {

@@ -1,61 +1,69 @@
 package org.gluu.radius.server.filter;
 
+import org.gluu.radius.model.ServerConfiguration;
+import org.gluu.radius.service.BootstrapConfigService;
+import org.gluu.radius.util.EncDecUtil;
+import org.xdi.oxauth.model.crypto.signature.SignatureAlgorithm;
+
 public class SuperGluuAccessRequestFilterConfig {
     
     //status check timeout is in milliseconds
     //so we put a default of 10 seconds 
     private static final Long DEFAULT_STATUS_CHECK_TIMEOUT = 10000L;
-    private String openidUsername;
-    private String openidPassword;
+    private final BootstrapConfigService bcService;
+    private ServerConfiguration serverConfig;
     private Long statusCheckTimeout;
     
-    public SuperGluuAccessRequestFilterConfig() {
+    public SuperGluuAccessRequestFilterConfig(final BootstrapConfigService bcService ,ServerConfiguration serverConfig) {
 
-        this.openidUsername = null;
-        this.openidPassword = null;
+        this.bcService = bcService;
+        this.serverConfig = serverConfig;
         this.statusCheckTimeout = DEFAULT_STATUS_CHECK_TIMEOUT;
-    }
-
-
-    public SuperGluuAccessRequestFilterConfig(String openidUsername,String openidPassword) {
-
-        this.openidUsername = openidUsername;
-        this.openidPassword = openidPassword;
     }
 
     public String getOpenidUsername() {
 
-        return this.openidUsername;
-    }
-
-
-    public SuperGluuAccessRequestFilterConfig setOpenidUsername(String openidUsername) {
-
-        this.openidUsername = openidUsername;
-        return this;
+        return serverConfig.getOpenidUsername();
     }
 
     public String getOpenidPassword() {
 
-        return this.openidPassword;
+        return EncDecUtil.decode(serverConfig.getOpenidPassword(),bcService.getEncodeSalt());
     }
 
-    public SuperGluuAccessRequestFilterConfig setOpenidPassword(String openidPassword) {
-
-        this.openidPassword = openidPassword;
-        return this;
-    }
 
     public Long getStatusCheckTimeout() {
 
         return this.statusCheckTimeout;
     }
 
-    public SuperGluuAccessRequestFilterConfig setStatusCheckTimeout(Long timeout) {
+    public String getInitialAuthAcrValues() {
 
-        this.statusCheckTimeout = timeout;
-        return this;
+        return serverConfig.getInitialAuthAcrValues();
     }
 
+    public String getInitialAuthScopes() {
 
+        return serverConfig.getInitialAuthScopes();
+    }
+
+    public String getFinalAuthAcrValues() {
+
+        return serverConfig.getFinalAuthAcrValues();
+    }
+
+    public String getFinalAuthScopes() {
+
+        return serverConfig.getFinalAuthScopes();
+    }
+
+    public String getJwtAuthKeyId() {
+
+        return bcService.getJwtAuthKeyId();
+    }
+
+    public SignatureAlgorithm getJwtAuthSignAlgo() {
+
+        return bcService.getJwtAuthSignAlgo();
+    }
 }

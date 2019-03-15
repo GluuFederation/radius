@@ -6,7 +6,9 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.90 NAME 'oxRadiusServerConfiguration'
    STRUCTURAL
    MUST ( objectClass )
    MAY ( ou $ oxRadiusListenInterface $ oxRadiusAuthenticationPort $ oxRadiusAccountingPort
-            $  oxRadiusOpenIdBaseUrl $ oxRadiusOpenIdUsername $ oxRadiusOpenIdPassword )
+            $  oxRadiusOpenIdBaseUrl $ oxRadiusOpenIdUsername $ oxRadiusOpenIdPassword 
+            $  oxRadiusInitialAuthAcrValues $ oxRadiusInitialAuthScopes 
+            $  oxRadiusFinalAuthAcrValues $ oxRadiusFinalAuthScopes )
    X-ORIGIN 'Gluu created objectclass' )
 objectClasses: ( 1.3.6.1.4.1.48710.1.4.91 NAME 'oxRadiusClient'
    SUP ( top )
@@ -72,3 +74,27 @@ attributeTypes: ( 1.3.6.1.4.48710.1.3.508 NAME 'oxRadiusOpenIdBaseUrl'
     SUBSTR caseIgnoreSubstringsMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
     X-ORIGIN 'Gluu created attributes' )
+attributeTypes: ( 1.3.6.1.4.48710.1.3.509 NAME 'oxRadiusInitialAuthAcrValues'
+    DESC 'Gluu Radius Init Auth Acr Values'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.48710.1.3.510 NAME 'oxRadiusInitialAuthScopes'
+    DESC 'Gluu Radius Init Auth OAuth Scopes'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.48710.1.3.511 NAME 'oxRadiusFinalAuthAcrValues'
+    DESC 'Gluu Radius Final Auth Acr Values'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    X-ORIGIN 'Gluu created attribute' )
+attributeTypes: ( 1.3.6.1.4.48710.1.3.512 NAME 'oxRadiusFinalAuthScopes'
+    DESC 'Gluu Radius Final Auth Scopes'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+    X-ORIGIN 'Gluu created attribute' )
