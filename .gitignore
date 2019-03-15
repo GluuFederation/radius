@@ -155,3 +155,14 @@ setup/*.jar
 setup/deps/
 setup/deps/*.jar
 
+.project
+.settings/
+Server/.classpath
+Server/.factorypath
+Server/.project
+Server/.settings/
+SessionStatus/.classpath
+SessionStatus/.factorypath
+SessionStatus/.project
+SessionStatus/.settings/
+
