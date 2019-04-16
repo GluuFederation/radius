@@ -1,17 +1,31 @@
 
 from com.google.android.gcm.server import Sender, Message
 from com.notnoop.apns import APNS
+
+from java.time import ZonedDateTime
+from java.time.format import DateTimeFormatter
+from javax.ws.rs import InternalServerErrorException
+
 from org.gluu.oxnotify.client import NotifyClientFactory
+from org.apache.http.params import CoreConnectionPNames
 from org.xdi.oxauth.service import EncryptionService , UserService
 from org.xdi.oxauth.service.fido.u2f import DeviceRegistrationService
+from org.xdi.oxauth.service.net import HttpService
 from org.xdi.oxauth.service.push.sns import PushPlatform, PushSnsService
 from org.xdi.service.cdi.util import CdiUtil
 from org.xdi.util import StringHelper
 
 
 
+
+
+
 import json
 import sys
+
+#
+# PushNotificationContext Class
+#
 
 class PushNotificationContext:
     def __init__(self, appId, superGluuRequest):
@@ -26,13 +40,18 @@ class PushNotificationContext:
         self.devicePlatform = None
         self.pushToken = None
 
-class PushNotificationWrapper:
+#
+# PushNotificationManager Class
+# 
+class PushNotificationManager:
     def __init__(self, serviceMode, credentialsFile):
-        self.pushSnsMode = None
-        self.pushGluuMode = None
+
+        self.pushSnsMode = False
+        self.pushGluuMode = False
         self.pushNotificationsEnabled = False
         self.titleTemplate = "Super-Gluu"
         self.messageTemplate = "Super-Gluu login request to %s"
+        self.debugEnabled = True
         creds = self.loadCredentials(credentialsFile)
         if creds == None:
             return None
@@ -45,20 +64,21 @@ class PushNotificationWrapper:
             self.initNativePushNotifications(creds)
     
     def initSnsPushNotifications(self, creds):
-        print "Super-Gluu PushNotificationWrapper. SNS push notifications init ..."
+
+        print "Super-Gluu. SNS push notifications init ..."
         self.pushSnsMode = True
         try:
             sns_creds = creds["sns"]
-            android_creds = creds["android"]
+            android_creds = creds["android"]["sns"]
             ios_creds = creds["ios"]["sns"]
         except:
-            print "Super-Gluu PushNotificationWrapper. Invalid SNS credentials format"
+            print "Super-Gluu. Invalid SNS credentials format"
             return None
         
         self.pushAndroidService = None
         self.pushAppleService = None
         if not (android_creds["enabled"] or ios_creds["enabled"]):
-            print "Super-gluu PushNotificationWrapper. SNS disabled for all platforms"
+            print "Super-Gluu. SNS disabled for all platforms"
             return None
         
         sns_access_key = sns_creds["access_key"]
@@ -71,7 +91,7 @@ class PushNotificationWrapper:
             sns_secret_access_key = encryptionService.decrypt(sns_secret_access_key)
         except:
             # Ignore exception. Password is not encrypted
-            print "Super-Gluu PushNotificationWrapper. Assuming 'sns_access_key' is not encrypted"
+            print "Super-Gluu. Assuming 'sns_access_key' is not encrypted"
         
         pushSnsService = CdiUtil.bean(PushSnsService)
         pushClient = pushSnsService.createSnsClient(sns_access_key,sns_secret_access_key,sns_region)
@@ -79,7 +99,7 @@ class PushNotificationWrapper:
         if android_creds["enabled"]:
             self.pushAndroidService = pushClient
             self.pushAndroidPlatformArn = android_creds["platform_arn"]
-            print "Super-Gluu PushNotificationWrapper. Created SNS android notification service"
+            print "Super-Gluu. Created SNS android notification service"
         
         if ios_creds["enabled"]:
             self.pushAppleService = pushClient
@@ -91,7 +111,7 @@ class PushNotificationWrapper:
     
     
     def initGluuPushNotifications(self, creds):
-        print "Super-Gluu PushNotificationWrapper. Gluu push notifications init ... "
+        print "Super-Gluu. Gluu push notifications init ... "
 
         self.pushGluuMode = True
 
@@ -100,25 +120,25 @@ class PushNotificationWrapper:
             android_creds = creds["android"]["gluu"]
             ios_creds = creds["ios"]["gluu"]
         except:
-            print "Super-Gluu PushNotificationWrapper. Invalid Gluu credentials format"
+            print "Super-Gluu. Invalid Gluu credentials format"
             return None
         
         self.pushAndroidService = None
         self.pushAppleService = None
 
-        if not(android_creds["enabled"] or not ios_creds["enabled"]):
-            print "Super-Gluu PushNotificationWrapper. Gluu disabled for all platforms"
+        if not(android_creds["enabled"] or ios_creds["enabled"]):
+            print "Super-Gluu. Gluu disabled for all platforms"
             return None
         
         gluu_server_uri = gluu_conf["server_uri"]
         notifyClientFactory  = NotifyClientFactory.instance()
         metadataConfiguration = None
         try:
-            metadataConfigurationService = notifyClientFactory.createMetadataConfigurationService(gluu_server_uri)
+            metadataConfigurationService = notifyClientFactory.createMetaDataConfigurationService(gluu_server_uri)
             metadataConfiguration = metadataConfigurationService.getMetadataConfiguration()
         except:
             exc_value = sys.exc_info()[1]
-            print "Super-Gluu PushNotificationWrapper. Gluu push notifications init failed while loading metadata" , exc_value
+            print "Super-Gluu. Gluu push notifications init failed while loading metadata. Exception: " , exc_value
             return None
         
         gluuClient = notifyClientFactory.createNotifyService(metadataConfiguration)
@@ -132,11 +152,11 @@ class PushNotificationWrapper:
                 gluu_secret_access_key = encryptionService.decrypt(gluu_secret_access_key)
             except:
                 # Ignore exception. Password is not encrypted
-                print "Super-Gluu PushNotificationWrapper. Assuming 'gluu_secret_access_key' is not encrypted"
+                print "Super-Gluu. Assuming 'gluu_secret_access_key' is not encrypted"
             
             self.pushAndroidService = gluuClient
             self.pushAndroidServiceAuth = notifyClientFactory.getAuthorization(gluu_access_key,gluu_secret_access_key)
-            print "Super-Gluu PushNotificationWrapper. Created Gluu Android notification service"
+            print "Super-Gluu. Created Gluu Android notification service"
         
         if ios_creds["enabled"]:
             gluu_access_key = ios_creds["access_key"]
@@ -146,21 +166,21 @@ class PushNotificationWrapper:
                 gluu_secret_access_key = encryptionService.decrypt(gluu_secret_access_key)
             except:
                 # Ignore exception. Password is not encrypted
-                print "Super-Gluu PushNotificationWrapper. Assuming 'gluu_secret_access_key' is not encrypted"
+                print "Super-Gluu. Assuming 'gluu_secret_access_key' is not encrypted"
             self.pushAppleService = gluuClient
             self.pushAppleServiceAuth = notifyClientFactory.getAuthorization(gluu_access_key,gluu_secret_access_key)
-            print "Super-Gluu PushNotificationWrapper. Created Gluu iOS notification service"
+            print "Super-Gluu. Created Gluu iOS notification service"
         
         self.pushNotificationsEnabled = self.pushAndroidService != None or self.pushAppleService != None
     
     
     def initNativePushNotifications(self, creds):
-        print "Super-Gluu PushNotificationWrapper. Native push notifications init ... "
+        print "Super-Gluu. Native push notifications init ... "
         try:
             android_creds = creds["android"]["gcm"]
             ios_creds = creds["ios"]["apns"]
         except:
-            print "Super-Gluu PushNotificationWrapper. Invalid credentials format"
+            print "Super-Gluu. Invalid credentials format"
             return None
         
         self.pushAndroidService = None
@@ -168,7 +188,7 @@ class PushNotificationWrapper:
 
         if android_creds["enabled"]:
             self.pushAndroidService = Sender(android_creds["api_key"])
-            print "Super-Gluu PushNotificationWrapper. Created native Android notification service"
+            print "Super-Gluu. Created native Android notification service"
         
         if ios_creds["enabled"]:
             p12_file_path = ios_creds["p12_file_path"]
@@ -179,7 +199,7 @@ class PushNotificationWrapper:
                 p12_password = encryptionService.decrypt(p12_password)
             except:
                 # Ignore exception. Password is not encrypted
-                print "Super-Gluu PushNotificationWrapper. Assuming 'p12_password' is not encrypted"
+                print "Super-Gluu. Assuming 'p12_password' is not encrypted"
 
             apnsServiceBuilder = APNS.newService().withCert(p12_file_path,p12_password)
             if ios_creds["production"]:
@@ -188,19 +208,20 @@ class PushNotificationWrapper:
                 self.pushAppleService = apnsServiceBuilder.withSandboxDestination().build()
             
             self.pushAppleServiceProduction = ios_creds["production"]
-            print "Super-Gluu PushNotificationWrapper. Created native iOS notification service"
+            print "Super-Gluu. Created native iOS notification service"
         
         self.pushNotificationsEnabled = self.pushAndroidService != None or self.pushAppleService != None
 
     
     def loadCredentials(self, credentialsFile):
-        print "Super-Gluu PushNotificationWrapper. Loading credentials ... "
+        print "Super-Gluu. Loading credentials ... "
         f = open(credentialsFile,'r')
         try:
             creds = json.loads(f.read())
+            print "Super-Gluu. Credentials loaded successfully"
         except:
             exception_value = sys.exc_info()[1]
-            print "Super-Gluu PushNotificationWrapper. Loading credentials failed.", exception_value 
+            print "Super-Gluu. Loading credentials failed.", exception_value 
             return None
         finally:
             f.close()
@@ -210,18 +231,21 @@ class PushNotificationWrapper:
     def sendPushNotification(self, user, app_id, super_gluu_request):
         try:
             self.sendPushNotificationImpl(user, app_id, super_gluu_request)
+        except InternalServerErrorException as is_error:
+            print "Super-Gluu. Failed to send push notification : ",is_error.getMessage()
+            is_error.printStackTrace()
         except:
             exception_value = sys.exc_info()[1]
-            print "Super-Gluu PushNotificationWrapper. Failed to send push notification :",exception_value
+            print "Super-Gluu. Failed to send push notification :",exception_value
     
     def sendPushNotificationImpl(self, user, app_id, super_gluu_request):
 
         if not self.pushNotificationsEnabled:
-            print "Super-Gluu PushNotificationWrapper. Push notifications are disabled"
+            print "Super-Gluu. Push notifications are disabled"
             return None
         
         user_name = user.getUserId()
-        print "Super-Gluu PushNotificationWrapper. Sending push notification to user '%s' devices" % user_name
+        print "Super-Gluu. Sending push notification to user '%s' devices" % user_name
 
         userService = CdiUtil.bean(UserService)
         deviceRegistrationService = CdiUtil.bean(DeviceRegistrationService)
@@ -235,11 +259,14 @@ class PushNotificationWrapper:
         send_android = 0
         if u2f_device_list.size() > 0:
             for u2f_device in u2f_device_list:
+                print "send device notification to device"
                 device_push_result = self.sendDevicePushNotification(user, app_id, u2f_device, super_gluu_request)
                 send_ios += device_push_result["send_ios"]
                 send_android += device_push_result["send_android"]
+        else:
+            print "No device enrolled for user '%s'" % user_name
         
-        msg = """ Super-Gluu PushNotificationWrapper. Send push notification. send_android: '%s', send_ios: '%s' """
+        msg = """ Super-Gluu. Send push notification. send_android: '%s', send_ios: '%s' """
         print msg % (send_android, send_ios)
                 
 
@@ -256,7 +283,7 @@ class PushNotificationWrapper:
         platform = device_data.getPlatform()
         push_token = device_data.getPushToken()
         pushNotificationContext = PushNotificationContext(app_id,super_gluu_request)
-        pushNotificationContext.debugEnabled = False
+        pushNotificationContext.debugEnabled = self.debugEnabled
         pushNotificationContext.user = user
         pushNotificationContext.u2fDevice = u2f_device
         pushNotificationContext.devicePlatform = platform
@@ -267,7 +294,7 @@ class PushNotificationWrapper:
         if StringHelper.equalsIgnoreCase(platform,"ios") and StringHelper.isNotEmpty(push_token):
             # Sending notification to iOS user's device
             if self.pushAppleService == None:
-                print "Super-Gluu PushNotificationWrapper. Apple push notification service disabled"
+                print "Super-Gluu. Apple push notification service disabled"
             else:
                 self.sendApplePushNotification(pushNotificationContext)
                 send_ios = 1
@@ -275,7 +302,7 @@ class PushNotificationWrapper:
         if StringHelper.equalsIgnoreCase(platform,"android") and StringHelper.isNotEmpty(push_token):
             # Sending notification to android user's device
             if self.pushAndroidService == None:
-                print "Super-Gluu PushNotificationWrapper. Android push notification service disabled"
+                print "Super-Gluu. Android push notification service disabled"
             else:
                 self.sendAndroidPushNotification(pushNotificationContext)
                 send_android = 1
@@ -311,8 +338,8 @@ class PushNotificationWrapper:
     def sendApplePushSnsNotification(self, pushNotificationContext):
 
         debug = pushNotificationContext.debugEnabled
-        
-        targetEndpointArn = self.getTargetEndpointArn(pushNotificationContext)
+        apple_push_platform = PushPlatform.APNS
+        targetEndpointArn = self.getTargetEndpointArn(apple_push_platform,pushNotificationContext)
         if targetEndpointArn == None:
             return None
         
@@ -324,48 +351,55 @@ class PushNotificationWrapper:
         pushSnsService = pushNotificationContext.pushSnsService
         send_notification_result = pushSnsService.sendPushMessage(self.pushAppleService, apple_push_platform, targetEndpointArn, push_message, None)
         if debug:
-            dbg_msg = """ Super-Gluu PushNotificatioNWrapper. Send iOS SNS push notification. 
+            dbg_msg = """ Super-Gluu. Send iOS SNS push notification. 
                           message: '%s', send_notification_result: '%s'"""
             print dbg_msg % (push_message, send_notification_result)
     
     def sendAndroidPushSnsNotification(self, pushNotificationContext):
 
-        targetEndpointArn = self.getTargetEndpointArn(pushNotificationContext)
+        debug = pushNotificationContext.debugEnabled
+        android_push_platform = PushPlatform.GCM
+        targetEndpointArn = self.getTargetEndpointArn(android_push_platform, pushNotificationContext)
         if targetEndpointArn == None:
             return None
         pushSnsService = pushNotificationContext.pushSnsService
         push_message = self.buildAndroidPushMessage(pushNotificationContext)
-        send_notification_result = pushSnsService.sendPushMessage(self.pushAndroidService, PushPlatform.GCM, targetEndpointArn, push_message, None)
-        if pushNotificationContext.debugEnabled:
-            dbg_msg = """ Super-Gluu PushNotificatioNWrapper. Send Android SNS push notification.
+        send_notification_result = pushSnsService.sendPushMessage(self.pushAndroidService, android_push_platform, targetEndpointArn, push_message, None)
+        if debug:
+            dbg_msg = """ Super-Gluu. Send Android SNS push notification.
                           message:'%s', send_notification_result: '%s'"""
             print dbg_msg % (push_message, send_notification_result)
         
     
     
     def sendApplePushGluuNotification(self, pushNotificationContext):
-        
-        targetEndpointArn = self.getTargetEndpointArn(pushNotificationContext)
+
+        debug = pushNotificationContext.debugEnabled
+        apple_push_platform = PushPlatform.APNS
+        targetEndpointArn = self.getTargetEndpointArn(apple_push_platform, pushNotificationContext)
         if targetEndpointArn == None:
             return None
         
-        debug = pushNotificationContext.debugEnabled
         push_message = self.buildApplePushMessage(pushNotificationContext)
+        print "push message : %s" % push_message
         send_notification_result = self.pushAppleService.sendNotification(self.pushAppleServiceAuth, targetEndpointArn, push_message)
+        print "push message sent"
         if debug:
-            dbg_msg = """ Super-Gluu PushNotificatioNWrapper. Send iOS gluu push notification. 
+            dbg_msg = """ Super-Gluu. Send iOS gluu push notification. 
                           message: '%s', send_notification_result: '%s'"""
             print dbg_msg % (push_message, send_notification_result)
     
     def sendAndroidPushGluuNotification(self, pushNotificationContext):
         
-        targetEndpointArn = self.getTargetEndpointArn(pushNotificationContext)
+        debug = pushNotificationContext.debugEnabled
+        android_push_platform = PushPlatform.GCM
+        targetEndpointArn = self.getTargetEndpointArn(android_push_platform, pushNotificationContext)
         if targetEndpointArn == None:
             return None
         push_message = self.buildAndroidPushMessage(pushNotificationContext)
         send_notification_result = self.pushAndroidService.sendNotification(self.pushAndroidServiceAuth, targetEndpointArn, push_message)
-        if pushNotificationContext.debugEnabled:
-            dbg_msg = """ Super-Gluu PushNotificatioNWrapper. Send Android gluu push notification.
+        if debug:
+            dbg_msg = """ Super-Gluu. Send Android gluu push notification.
                           message: '%s', send_notification_result: '%s' """
             print dbg_msg % (push_message,send_notification_result)
         pass
@@ -383,7 +417,7 @@ class PushNotificationWrapper:
         push_message = msgBuilder.build()
         send_notification_result = self.pushAppleService.push(push_token, push_message)
         if debug:
-            dbg_msg = """ Super-Gluu PushNotificatioNWrapper. Send iOS native push notification. 
+            dbg_msg = """ Super-Gluu. Send iOS native push notification. 
                           push_token:'%s', message: '%s', send_notification_result: '%s'"""
             print dbg_msg % (push_token, push_message, send_notification_result)
     
@@ -396,7 +430,7 @@ class PushNotificationWrapper:
         push_token = pushNotificationContext.pushToken
         send_notification_result = self.pushAndroidService.send(push_message, push_token, 3)
         if pushNotificationContext.debugEnabled:
-            dbg_msg = """ Super-Gluu PushNotificatioNWrapper. Send iOS native push notification. 
+            dbg_msg = """ Super-Gluu. Send iOS native push notification. 
                           push_token:'%s', message: '%s', send_notification_result: '%s'"""
             print dbg_msg % (push_token, push_message, send_notification_result)
         
@@ -408,7 +442,7 @@ class PushNotificationWrapper:
         message = self.messageTemplate % pushNotificationContext.appId
         sns_push_request_dictionary = {
             "request": pushNotificationContext.superGluuRequest,
-            "apns": {
+            "aps": {
                 "badge": 0,
                 "alert": {"body":message,"title":title},
                 "category": "ACTIONABLE",
@@ -431,11 +465,10 @@ class PushNotificationWrapper:
         }
         return json.dumps(sns_push_request_dictionary,separators=(',',':'))
       
-    def getTargetEndpointArn(self, pushNotificationContext):
+    def getTargetEndpointArn(self, platform, pushNotificationContext):
         
         deviceRegistrationService = pushNotificationContext.deviceRegistrationService
         pushSnsService = pushNotificationContext.pushSnsService
-        platform = pushNotificationContext.devicePlatform
         user = pushNotificationContext.user
         u2fDevice  = pushNotificationContext.u2fDevice
         targetEndpointArn = None
@@ -446,7 +479,7 @@ class PushNotificationWrapper:
             notificationConfJson = json.loads(notificationConf)
             targetEndpointArn = notificationConfJson['sns_endpoint_arn']
             if StringHelper.isNotEmpty(targetEndpointArn):
-                print "Super-Gluu PushNotificationWrapper. Target endpoint ARN already created"
+                print "Super-Gluu. Target endpoint ARN already created : ", targetEndpointArn
                 return targetEndpointArn
         
         # Create endpoint ARN
@@ -466,12 +499,13 @@ class PushNotificationWrapper:
             if self.pushGluuMode:
                 pushClientAuth = self.pushAppleServiceAuth
         else:
+            print "Super-Gluu. Unsupported platform for ARN."
             return None
         
         deviceData = u2fDevice.getDeviceData()
         pushToken  = deviceData.getPushToken()
 
-        print "Super-Gluu PushNotificationWrapper. Attempting to create target endpoint ARN for user: %s" % user.getUserId()
+        print "Super-Gluu. Attempting to create target endpoint ARN for user: %s" % user.getUserId()
         if self.pushSnsMode:
             targetEndpointArn = pushSnsService.createPlatformArn(pushClient,platformApplicationArn,pushToken,user)
         else:
@@ -481,10 +515,10 @@ class PushNotificationWrapper:
                 targetEndpointArn = registerDeviceResponse.getEndpointArn()
         
         if StringHelper.isEmpty(targetEndpointArn):
-            print "Super-Gluu PushNotificationWrapper. Failed to get endpoint ARN for user: '%s'" % user.getUserId()
+            print "Super-Gluu. Failed to get endpoint ARN for user: '%s'" % user.getUserId()
             return None
         
-        printmsg = "Super-Gluu PushNotificationWrapper. Create target endpoint ARN '%s' for user '%s'"
+        printmsg = "Super-Gluu. Create target endpoint ARN '%s' for user '%s'"
         print printmsg % (targetEndpointArn, user.getUserId())
         
         # Store created endpoint ARN in device entry
@@ -495,5 +529,122 @@ class PushNotificationWrapper:
 
         return targetEndpointArn
 
+
+#
+# GeolocationData Class
+#
+class GeolocationData:
+    def __init__(self,response):
+        self.city = response['city']
+        self.country = response['country']
+        self.region = response['regionName']
+    
+
+#
+# Network Api
+#
+class NetworkApi:
+    def __init__(self, conn_timeout =15 * 1000):
+        self.conn_timeout = conn_timeout
+        print "Network API. {conn_timeout=%d}" % conn_timeout
+    
+    def get_remote_ip_from_request(self, servletRequest):
+        try:
+            remote_ip = servletRequest.getHeader("X-FORWARDED-FOR")
+            if StringHelper.isEmpty(remote_ip):
+                remote_ip = servletRequest.getRemoteAddr()
             
+            return remote_ip
+        except:
+            print "Network Api. Could not determine remote location: ", sys.exc_info()[1]
+        
+        return None
+        
+    
+    def get_geolocation_data(self, remote_ip):
+        print "Network API. Determining remote location for ip address '%s'" % remote_ip
+        httpService = CdiUtil.bean(HttpService)
+
+        http_client = httpService.getHttpsClient()
+        http_client_params = http_client.getParams()
+        http_client_params.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,self.conn_timeout)
+
+        geolocation_service_url = "http://ip-api.com/json/%s?fields=49177" % remote_ip
+        geolocation_service_headers = { "Accept": "application/json"}
+
+        try:
+            http_service_response = httpService.executeGet(http_client,geolocation_service_url,geolocation_service_headers)
+            http_response = http_service_response.getHttpResponse()
+        except:
+            print "Network API. Could not determine remote location: ", sys.exc_info()[1]
+            return None
+        
+        try:
+            if not httpService.isResponseStastusCodeOk(http_response):
+                http_error_str = str(http_response.getStatusLine().getStatusCode())
+                print "Geolocation API. Could not determine remote location: ",http_error_str
+                httpService.consume(http_response)
+                return None
+            
+            response_bytes = httpService.getResponseContent(http_response)
+            response_string = httpService.convertEntityToString(response_bytes)
+            httpService.consume(http_response)
+        finally:
+            http_service_response.closeConnection()
+        
+        if response_string == None:
+            print "Geolocation API. Could not determine remote location. Empty respone from server"
+            return None
+        
+        response = json.loads(response_string)
+
+        if not StringHelper.equalsIgnoreCase(response['status'],"success"):
+            print "Geolocation API. Could not determine remote location. ip-api status: '%s'" % response['status']
+            return None
+        
+        return GeolocationData(response)
+
+
+#
+# SuperGluuRequestBuilder class 
+# 
+
+class SuperGluuRequestBuilder:
+    def __init__(self, method="authenticate"):
+        self.username = ''
+        self.app = ''
+        self.issuer = ''
+        self.state = ''
+        self.method = method
+        self.licensed = False
+        self.created = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now().withNano(0))
+        self.req_ip = ''
+        self.req_loc = ''
+    
+    def is_authenticate_method(self):
+        self.method = "authenticate"
+    
+    def is_enroll_method(self):
+        self.method = "enroll"
+    
+    def requestLocation(self, geoloc_data):
+        if geoloc_data != None:
+            self.req_loc = "%s, %s, %s" % (geoloc_data.country, geoloc_data.city, geoloc_data.region)
+        else:
+            self.req_loc = ""
+    
+    def build(self):
+        request_dict = {
+            "username" : self.username,
+            "app" : self.app,
+            "issuer" : self.issuer,
+            "state": self.state,
+            "method": self.method,
+            "licensed" : self.licensed,
+            "created" : self.created,
+            "req_ip" : self.req_ip,
+            "req_loc" : self.req_loc
+        }
+
+        return json.dumps(request_dict,separators=(',',':'))
 
