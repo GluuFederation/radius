@@ -4,6 +4,7 @@ from com.notnoop.apns import APNS
 
 from java.time import ZonedDateTime
 from java.time.format import DateTimeFormatter
+from javax.ws.rs import InternalServerErrorException
 
 from org.gluu.oxnotify.client import NotifyClientFactory
 from org.apache.http.params import CoreConnectionPNames
@@ -540,19 +541,33 @@ class GeolocationData:
     
 
 #
-# GeolocationApi Class 
+# Network Api
 #
-class GeolocationApi:
-    def __init__(self, connection_timeout =15 * 1000):
-        self.connection_timeout = connection_timeout
+class NetworkApi:
+    def __init__(self, conn_timeout =15 * 1000):
+        self.conn_timeout = conn_timeout
+        print "Network API. {conn_timeout=%d}" % conn_timeout
     
-    def getGeolocationData(self, remote_ip):
-        print "Geolocation Api. Determining remote location for ip address '%s'" % remote_ip
+    def get_remote_ip_from_request(self, servletRequest):
+        try:
+            remote_ip = servletRequest.getHeader("X-FORWARDED-FOR")
+            if StringHelper.isEmpty(remote_ip):
+                remote_ip = servletRequest.getRemoteAddr()
+            
+            return remote_ip
+        except:
+            print "Network Api. Could not determine remote location: ", sys.exc_info()[1]
+        
+        return None
+        
+    
+    def get_geolocation_data(self, remote_ip):
+        print "Network API. Determining remote location for ip address '%s'" % remote_ip
         httpService = CdiUtil.bean(HttpService)
 
         http_client = httpService.getHttpsClient()
         http_client_params = http_client.getParams()
-        http_client_params.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,self.connection_timeout)
+        http_client_params.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,self.conn_timeout)
 
         geolocation_service_url = "http://ip-api.com/json/%s?fields=49177" % remote_ip
         geolocation_service_headers = { "Accept": "application/json"}
@@ -561,7 +576,7 @@ class GeolocationApi:
             http_service_response = httpService.executeGet(http_client,geolocation_service_url,geolocation_service_headers)
             http_response = http_service_response.getHttpResponse()
         except:
-            print "Geolocation API. Could not determine remote location: ", sys.exc_info()[1]
+            print "Network API. Could not determine remote location: ", sys.exc_info()[1]
             return None
         
         try:
@@ -598,6 +613,7 @@ class SuperGluuRequestBuilder:
     def __init__(self, method="authenticate"):
         self.username = ''
         self.app = ''
+        self.issuer = ''
         self.state = ''
         self.method = method
         self.licensed = False
@@ -605,19 +621,23 @@ class SuperGluuRequestBuilder:
         self.req_ip = ''
         self.req_loc = ''
     
-    def authenticateMethod(self):
+    def is_authenticate_method(self):
         self.method = "authenticate"
     
-    def enrollMethod(self):
+    def is_enroll_method(self):
         self.method = "enroll"
     
     def requestLocation(self, geoloc_data):
-        self.req_loc = "%s, %s, %s" % (geoloc_data.country, geoloc_data.city, geoloc_data.region)
+        if geoloc_data != None:
+            self.req_loc = "%s, %s, %s" % (geoloc_data.country, geoloc_data.city, geoloc_data.region)
+        else:
+            self.req_loc = ""
     
-    def create(self):
+    def build(self):
         request_dict = {
             "username" : self.username,
             "app" : self.app,
+            "issuer" : self.issuer,
             "state": self.state,
             "method": self.method,
             "licensed" : self.licensed,
