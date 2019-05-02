@@ -1,4 +1,4 @@
-package org.gluu.oxauth.session.status.model;
+package org.gluu.oxauth.client.supergluu.impl.model;
 
 
 public class SessionStatusResponseParam {

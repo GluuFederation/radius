@@ -27,7 +27,7 @@
 
   <modules>
     <module>Server</module>
-    <module>SessionStatus</module>
+    <module>SuperGluuAuth</module>
   </modules>
 
   <dependencies>

@@ -13,8 +13,8 @@ public class BootstrapConfigService  {
     private enum BootstrapConfigKeys {
         SaltFile("radius.config.saltfile"),
         LdapConfigFile("radius.config.oxldap"),
-        KeyStoreFile("radius.keyStoreFile"),
-        KeyStorePin("radius.keyStorePin"),
+        JwtKeyStoreFile("radius.jwt.keyStoreFile"),
+        JwtKeyStorePin("radius.jwt.keyStorePin"),
         JwtAuthKeyId("radius.jwt.auth.keyId"),
         JwtAuthSignatureAlgorithm("radius.jwt.auth.signAlgorithm");
 
@@ -39,8 +39,8 @@ public class BootstrapConfigService  {
 
     private String salt;
     private Properties oxLdapConfig;
-    private String keyStoreFile;
-    private String keyStorePin;
+    private String jwtKeyStoreFile;
+    private String jwtKeyStorePin;
     private String jwtAuthKeyId;
     private SignatureAlgorithm jwtAuthSignAlgo;
 
@@ -58,8 +58,8 @@ public class BootstrapConfigService  {
 
         this.oxLdapConfig = loadPropertiesFromFile(ldapConfigFile);
 
-        this.keyStoreFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.KeyStoreFile.getKeyName());
-        this.keyStorePin  = oxRadiusConfig.getProperty(BootstrapConfigKeys.KeyStorePin.getKeyName());
+        this.jwtKeyStoreFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStoreFile.getKeyName());
+        this.jwtKeyStorePin  = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStorePin.getKeyName());
 
         this.jwtAuthKeyId = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthKeyId.getKeyName());
         String signalgo = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthSignatureAlgorithm.getKeyName());
@@ -91,14 +91,14 @@ public class BootstrapConfigService  {
         return oxRadiusClientConfigRdn + "," + getRadiusConfigDN();
     }
 
-    public final String getKeyStoreFile() {
+    public final String getJwtKeyStoreFile() {
 
-        return this.keyStoreFile;
+        return this.jwtKeyStoreFile;
     }
 
-    public final String getKeyStorePin() {
+    public final String getJwtKeyStorePin() {
 
-        return this.keyStorePin;
+        return this.jwtKeyStorePin;
     }
 
     public final String getJwtAuthKeyId() {

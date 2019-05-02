@@ -1,4 +1,4 @@
-package org.gluu.oxauth.session.status;
+package org.gluu.oxauth.client.supergluu.impl;
 
 import java.io.Serializable;
 
@@ -8,9 +8,9 @@ import org.apache.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import org.gluu.oxauth.session.status.model.SessionState;
-import org.gluu.oxauth.session.status.model.SessionCustomState;
-import static org.gluu.oxauth.session.status.model.SessionStatusResponseParam.*;
+import org.gluu.oxauth.client.supergluu.impl.model.SessionState;
+import org.gluu.oxauth.client.supergluu.impl.model.SessionCustomState;
+import static org.gluu.oxauth.client.supergluu.impl.model.SessionStatusResponseParam.*;
 
 import org.jboss.resteasy.client.ClientResponse;
 import org.xdi.oxauth.client.BaseResponse;
@@ -30,7 +30,7 @@ public class SessionStatusResponse extends BaseResponse implements Serializable 
         super(clientResponse);
         
         if(StringUtils.isNotBlank(entity)) {
-
+            
             try {
                 JSONObject jsonObj = new JSONObject(entity);
 

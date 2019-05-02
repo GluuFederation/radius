@@ -1,9 +1,10 @@
 package org.gluu.radius.service;
 
 import java.io.IOException;
-import org.gluu.radius.exception.ClientFactoryException;
 import org.gluu.radius.exception.ServiceException;
-import org.gluu.radius.openid.ClientFactory;
+import org.gluu.radius.KnownService;
+import org.gluu.radius.service.ServerConfigService;
+import org.gluu.radius.ServiceLocator;
 import org.xdi.oxauth.client.OpenIdConfigurationClient;
 import org.xdi.oxauth.client.OpenIdConfigurationResponse;
 
@@ -13,12 +14,12 @@ public class OpenIdConfigurationService {
     private String registrationEndpoint;
     private String tokenEndpoint;
 
-    public OpenIdConfigurationService() {
+    public OpenIdConfigurationService(ServerConfigService serverConfigService) {
 
         this.authorizationEndpoint = null;
         this.registrationEndpoint  = null;
         this.tokenEndpoint = null;
-        loadOpenIdConfiguration();
+        loadOpenIdConfiguration(serverConfigService);
     }
 
     public String getAuthorizationEndpoint() {
@@ -36,20 +37,22 @@ public class OpenIdConfigurationService {
         return this.tokenEndpoint;
     }
 
-    private void loadOpenIdConfiguration() {
+    private void loadOpenIdConfiguration(ServerConfigService serverConfigService) {
 
         try {
-            OpenIdConfigurationClient client = ClientFactory.createOpenIdConfigurationClient();
+            String openIdBaseUrl = serverConfigService.getServerConfiguration().getOpenidBaseUrl();
+            String openIdConfigurationUrl = openIdBaseUrl + "/.well-known/openid-configuration";
+            OpenIdConfigurationClient client = new OpenIdConfigurationClient(openIdConfigurationUrl);
             OpenIdConfigurationResponse response = client.execOpenIdConfiguration();
-            if(response != null && response.getStatus() == 200 ) {
+            if (response != null && response.getStatus() == 200) {
                 authorizationEndpoint = response.getAuthorizationEndpoint();
                 registrationEndpoint  = response.getRegistrationEndpoint();
                 tokenEndpoint = response.getTokenEndpoint();
-            }else
+            }
+            else
                 throw new ServiceException("Could not load OpenIdConfiguration");
+            
         }catch(IOException e) {
-            throw new ServiceException("Could not load OpenIdConfiguration",e);
-        }catch(ClientFactoryException e) {
             throw new ServiceException("Could not load OpenIdConfiguration",e);
         }
     }

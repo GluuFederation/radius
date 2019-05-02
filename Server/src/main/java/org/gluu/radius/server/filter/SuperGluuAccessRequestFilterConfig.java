@@ -1,24 +1,29 @@
 package org.gluu.radius.server.filter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.service.BootstrapConfigService;
+import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.util.EncDecUtil;
 import org.xdi.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class SuperGluuAccessRequestFilterConfig {
     
     //status check timeout is in milliseconds
-    //so we put a default of 10 seconds 
-    private static final Long DEFAULT_STATUS_CHECK_TIMEOUT = 10000L;
+    private static final Long DEFAULT_AUTHENTICATION_TIMEOUT = 30000L;
+    private static final String SESSION_STATUS_URI = "/oxauth/restv1/session_status";
     private final BootstrapConfigService bcService;
+    private final OpenIdConfigurationService openIdConfigService;
     private ServerConfiguration serverConfig;
-    private Long statusCheckTimeout;
     
-    public SuperGluuAccessRequestFilterConfig(final BootstrapConfigService bcService ,ServerConfiguration serverConfig) {
+    public SuperGluuAccessRequestFilterConfig(final BootstrapConfigService bcService, 
+        ServerConfiguration serverConfig, OpenIdConfigurationService openIdConfigService) {
 
         this.bcService = bcService;
         this.serverConfig = serverConfig;
-        this.statusCheckTimeout = DEFAULT_STATUS_CHECK_TIMEOUT;
+        this.openIdConfigService = openIdConfigService;
     }
 
     public String getOpenidUsername() {
@@ -32,29 +37,36 @@ public class SuperGluuAccessRequestFilterConfig {
     }
 
 
-    public Long getStatusCheckTimeout() {
+    public Long getAuthenticationTimeout() {
 
-        return this.statusCheckTimeout;
+        if (serverConfig.getAuthenticationTimeout() == 0)
+            return DEFAULT_AUTHENTICATION_TIMEOUT;
+        else
+            return serverConfig.getAuthenticationTimeout().longValue();
     }
 
-    public String getInitialAuthAcrValues() {
+    public String getAcrValue() {
 
-        return serverConfig.getInitialAuthAcrValues();
+        return serverConfig.getAcrValue();
     }
 
-    public String getInitialAuthScopes() {
-
-        return serverConfig.getInitialAuthScopes();
+    public List<String> getScopes() {
+        
+        List<String> scopes = new ArrayList<String>();
+        for(ServerConfiguration.AuthScope authScope: serverConfig.getScopes())
+            scopes.add(authScope.getName());
+        
+        return scopes;
     }
 
-    public String getFinalAuthAcrValues() {
+    public String getJwtKeyStoreFile() {
 
-        return serverConfig.getFinalAuthAcrValues();
+        return bcService.getJwtKeyStoreFile();
     }
 
-    public String getFinalAuthScopes() {
+    public String getJwtKeyStorePin() {
 
-        return serverConfig.getFinalAuthScopes();
+        return EncDecUtil.decode(bcService.getJwtKeyStorePin(),bcService.getEncodeSalt());
     }
 
     public String getJwtAuthKeyId() {
@@ -65,5 +77,30 @@ public class SuperGluuAccessRequestFilterConfig {
     public SignatureAlgorithm getJwtAuthSignAlgo() {
 
         return bcService.getJwtAuthSignAlgo();
+    }
+
+    public String getTokenEndpointUrl() {
+
+        return this.openIdConfigService.getTokenEndpoint();
+    }
+
+    public String getAuthorizationEndpointUrl() {
+
+        return this.openIdConfigService.getAuthorizationEndpoint();
+    }
+
+    public String getRegistrationEndpointUrl() {
+
+        return this.openIdConfigService.getRegistrationEndpoint();
+    }
+
+    public String getOpenIdBaseUrl() {
+
+        return this.serverConfig.getOpenidBaseUrl();
+    }
+
+    public String getSessionStatusUrl() {
+
+        return this.serverConfig.getOpenidBaseUrl() + SESSION_STATUS_URI;
     }
 }
