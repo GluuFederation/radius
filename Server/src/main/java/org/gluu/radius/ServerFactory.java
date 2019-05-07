@@ -15,8 +15,9 @@ import org.gluu.radius.server.RadiusServerAdapter;
 import org.gluu.radius.server.RunConfiguration;
 import org.gluu.radius.server.tinyradius.TinyRadiusServerAdapter;
 import org.gluu.radius.service.BootstrapConfigService;
-import org.gluu.radius.service.ServerConfigService;
 import org.gluu.radius.service.RadiusClientService;
+import org.gluu.radius.service.OpenIdConfigurationService;
+import org.gluu.radius.service.ServerConfigService;
 
 public class ServerFactory {
 
@@ -82,9 +83,11 @@ public class ServerFactory {
 
         ServerConfiguration serverConfig = getServerConfiguration();
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
+        OpenIdConfigurationService openIdConfigService = ServiceLocator.getService(KnownService.OpenIdConfig);
         return new SuperGluuAccessRequestFilterConfig(
             bcService,
-            serverConfig
+            serverConfig,
+            openIdConfigService
         );
     }
 }

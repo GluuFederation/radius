@@ -12,22 +12,22 @@ class DynamicScope(DynamicScopeType):
         self.currentTimeMillis = currentTimeMillis
 
     def init(self,configurationAttributes):
-        print "SuperGluu Radius dynamic scope init"
-        self.sessionIdClaimName = "session_id"
+        print "Super-Gluu-DynScope init"
+        self.sessionIdClaimName = "__session_id"
         if configurationAttributes.containsKey("session_id_claim_name"):
             self.sessionIdClaimName = configurationAttributes.get("session_id_claim_name").getValue2()
         
-        print "SuperGluu Radius dynamic scope init complete"
+        print "Super-Gluu-DynScope init complete"
         return True
     
     def destroy(self, configurationAttributes):
-        print "SuperGluu Radius dynamic scope destruction"
-        print "SuperGluu Radius dynamic scope destruction complete"
+        print "Super-Gluu-DynScope destroy"
+        print "Super-Gluu-DynScope destroy complete"
         return True
     
     def update(self, dynamicScopeContext, configurationAttributes):
         # Todo implement this
-        print "SuperGluu Radius dynamic scope update"
+        print "Super-Gluu-DynScope update"
         updated = False
         identity = CdiUtil.bean(Identity)
         if (identity is not None) and (identity.getSessionId() is not None):
@@ -36,8 +36,9 @@ class DynamicScope(DynamicScopeType):
             claims = jsonWebResponse.getClaims()
             claims.setClaim(self.sessionIdClaimName,session_id)
             updated = True
-            print "Updated With Identity Session ID"
-             
+        else:
+            print "Super-Gluu-DynScope. No session id found. Skipping"
+        print "Super-Gluu-DynScope update complete"
         return updated
     
     def getApiVersion(self):

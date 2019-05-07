@@ -2,7 +2,6 @@ package org.gluu.radius.service;
 
 import com.unboundid.ldap.sdk.Filter;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.gluu.site.ldap.persistence.LdapEntryManager;
@@ -35,8 +34,31 @@ public class ServerConfigService {
                 searchFilter,SearchScope.BASE);
             if(serverConfigs.size() == 0)
                 return null;
-            return serverConfigs.get(0);
+            ServerConfiguration serverConfig = serverConfigs.get(0);
+            if(serverConfig.getScopesDn() == null)
+                return serverConfig;
+            
+            for(String scopeDn : serverConfig.getScopesDn()) {
+                ServerConfiguration.AuthScope authScope = getScope(scopeDn);
+                if(authScope != null)
+                    serverConfig.addScope(authScope);
+            }
+            return serverConfig;
     
+        }catch(EntryPersistenceException e) {
+            throw new ServiceException("Failed fetching server configuration",e);
+        }
+    }
+
+    private final ServerConfiguration.AuthScope getScope(String scopeDn) {
+
+        try {
+           List<ServerConfiguration.AuthScope> foundScopes = ldapEntryManager.findEntries(scopeDn,
+           ServerConfiguration.AuthScope.class,null,SearchScope.BASE);
+           if (foundScopes.isEmpty())
+                return null;
+            else
+                return foundScopes.get(0);
         }catch(EntryPersistenceException e) {
             throw new ServiceException("Failed fetching server configuration",e);
         }

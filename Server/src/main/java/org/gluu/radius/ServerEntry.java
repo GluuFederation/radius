@@ -1,6 +1,5 @@
 package org.gluu.radius;
 
-import java.io.IOException;
 import java.security.Security;
 
 import org.apache.log4j.Logger;
@@ -10,11 +9,10 @@ import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.exception.ServerException;
 import org.gluu.radius.exception.ServerFactoryException;
 import org.gluu.radius.ldap.LdapEntryManagerFactory;
-import org.gluu.radius.openid.http.HttpClientFactory;
-import org.gluu.radius.openid.http.HttpClientFactoryOptions;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.server.lifecycle.*;
 import org.gluu.radius.service.BootstrapConfigService;
+import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.ServerConfigService;
 
@@ -22,30 +20,28 @@ import org.gluu.site.ldap.persistence.LdapEntryManager;
 
 
 
-
-
 public class ServerEntry {
-    
+
     private static final Logger log = Logger.getLogger(ServerEntry.class);
     private static LdapEntryManager ldapEntryManager = null;
 
-    public static void main(String [] args) {
+    public static void main(String[] args) {
 
-        
         printStartupMessage();
-        if(args.length==0) {
+        if (args.length == 0) {
             log.error("Configuration file not specified on the command line. Exiting ... ");
             System.exit(-1);
         }
 
         String appConfigFile = args[0];
-        log.info("Application bootstrap configuration file: "+appConfigFile);
+        log.info("Application bootstrap configuration file: " + appConfigFile);
 
         log.info("Initializing Security Components ... ");
-        if(!initSecurity()) {
+        if (!initSecurity()) {
             log.error("Could not initialize security components");
             System.exit(-1);
         }
+
         
         log.info("Registering BootstrapConfigService ... ");
         if(!registerBootstrapConfigService(appConfigFile)) {
@@ -70,17 +66,17 @@ public class ServerEntry {
 
         log.info("Registering ServerConfigService ... ");
         if(!registerServerConfigService()) {
-            log.error("RadiusClientService registration failed. Exiting ... ");
+            log.error("ServerConfigService registration failed. Exiting ... ");
             System.exit(-1);
         }
         log.info("done");
 
-        log.info("Initializing Http components ... ");
-        if(!initHttpComponents()) {
-            log.error("Http components init failed. Exiting ... ");
+        log.info("Registering OpenIdConfigurationService ...");
+        if(!registerOpenIdConfigurationService()) {
+            log.error("OPenIdConfigurationService registration failed. Exiting ... ");
             System.exit(-1);
         }
-        log.info("Done");
+        log.info("done");
 
         log.info("Starting Radius Server ...");
         if(!startServer()) {
@@ -88,6 +84,7 @@ public class ServerEntry {
             System.exit(-1);
         }
         log.info("done");
+        
 
         
     }
@@ -136,16 +133,16 @@ public class ServerEntry {
         return true;
     }
 
-    private static final boolean initHttpComponents() {
+    private static final boolean registerOpenIdConfigurationService() {
 
-        HttpClientFactoryOptions cfOptions = new HttpClientFactoryOptions();
-        cfOptions.setVerifyHttpsHostname(false);
         boolean ret = false;
         try {
-            HttpClientFactory.init(cfOptions);
-            ret = true;
-        }catch(Exception e) {
-            log.error("Error initializing http client factory",e);
+            ServerConfigService scService = ServiceLocator.getService(KnownService.ServerConfig);
+            OpenIdConfigurationService openIdConfigService = new OpenIdConfigurationService(scService);
+            ServiceLocator.registerService(KnownService.OpenIdConfig,openIdConfigService);
+            return true;
+        }catch(ServiceException e) {
+            log.error(e.getMessage(),e);
         }
         return ret;
     }

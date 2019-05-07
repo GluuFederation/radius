@@ -1,4 +1,4 @@
-package org.gluu.oxauth.session.status.model;
+package org.gluu.oxauth.client.supergluu.impl.model;
 
 public enum SessionCustomState {
 
@@ -15,7 +15,7 @@ public enum SessionCustomState {
 
     public static final SessionCustomState fromString(String value) {
 
-        if(value == null) {
+        if(value != null) {
             for(SessionCustomState state: SessionCustomState.values()) {
                 if(value.equals(state.value)) {
                     return state;

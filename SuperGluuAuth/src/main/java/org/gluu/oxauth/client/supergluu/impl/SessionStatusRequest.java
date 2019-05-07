@@ -1,4 +1,4 @@
-package org.gluu.oxauth.session.status;
+package org.gluu.oxauth.client.supergluu.impl;
 
 import org.xdi.oxauth.client.BaseRequest;
 
