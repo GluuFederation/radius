@@ -13,7 +13,7 @@ import org.gluu.oxauth.client.supergluu.impl.model.SessionCustomState;
 import static org.gluu.oxauth.client.supergluu.impl.model.SessionStatusResponseParam.*;
 
 import org.jboss.resteasy.client.ClientResponse;
-import org.xdi.oxauth.client.BaseResponse;
+import org.gluu.oxauth.client.BaseResponse;
 
 
 public class SessionStatusResponse extends BaseResponse implements Serializable {

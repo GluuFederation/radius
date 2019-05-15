@@ -73,6 +73,12 @@ attributeTypes: ( 1.3.6.1.4.48710.1.3.511 NAME 'oxRadiusAuthenticationTimeout'
     SUBSTR integerOrderingMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
     X-ORIGIN 'Gluu created attribute' )
+attributeTypes: (  1.3.6.1.4.48710.1.3.512 NAME 'oxRadiusClientSortPriority'
+    DESC 'Gluu radius client sort priority'
+    EQUALITY integerMatch
+    SUBSTR integerOrderingMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+    X-ORIGIN 'Gluu created attribute' )
 
 
 dn: cn=schema
@@ -90,7 +96,7 @@ objectClasses: ( 1.3.6.1.4.1.48710.1.4.91 NAME 'oxRadiusClient'
    SUP ( top )
    STRUCTURAL
    MUST ( objectClass )
-   MAY ( inum $ oxRadiusClientName $ oxRadiusClientIpAddress $ oxRadiusClientSecret )
+   MAY ( inum $ oxRadiusClientName $ oxRadiusClientIpAddress $ oxRadiusClientSecret $ oxRadiusClientSortPriority )
    X-ORIGIN 'Gluu created objectclass' )
 
 

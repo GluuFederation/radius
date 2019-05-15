@@ -8,12 +8,12 @@ from javax.ws.rs import InternalServerErrorException
 
 from org.gluu.oxnotify.client import NotifyClientFactory
 from org.apache.http.params import CoreConnectionPNames
-from org.xdi.oxauth.service import EncryptionService , UserService
-from org.xdi.oxauth.service.fido.u2f import DeviceRegistrationService
-from org.xdi.oxauth.service.net import HttpService
-from org.xdi.oxauth.service.push.sns import PushPlatform, PushSnsService
-from org.xdi.service.cdi.util import CdiUtil
-from org.xdi.util import StringHelper
+from org.gluu.oxauth.service import EncryptionService , UserService
+from org.gluu.oxauth.service.fido.u2f import DeviceRegistrationService
+from org.gluu.oxauth.service.net import HttpService
+from org.gluu.oxauth.service.push.sns import PushPlatform, PushSnsService
+from org.gluu.service.cdi.util import CdiUtil
+from org.gluu.util import StringHelper
 
 
 import json

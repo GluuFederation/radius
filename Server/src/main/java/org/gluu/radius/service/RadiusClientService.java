@@ -2,33 +2,33 @@ package org.gluu.radius.service;
 
 import java.util.List;
 
-import com.unboundid.ldap.sdk.Filter;
 import org.apache.log4j.Logger;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.RadiusClient;
-import org.gluu.site.ldap.persistence.exception.EntryPersistenceException;
-import org.gluu.site.ldap.persistence.LdapEntryManager;
-import org.xdi.ldap.model.SearchScope;
+import org.gluu.persist.exception.EntryPersistenceException;
+import org.gluu.persist.PersistenceEntryManager;
+import org.gluu.persist.model.SearchScope;
+import org.gluu.search.filter.Filter;
 
 
 public class RadiusClientService  {
 
     private static final Logger log = Logger.getLogger(RadiusClientService.class);
     
-    private LdapEntryManager ldapEntryManager;
+    private PersistenceEntryManager persistenceEntryManager;
     private String configEntryDn;
 
-    public RadiusClientService(LdapEntryManager ldapEntryManager,String configEntryDn) {
+    public RadiusClientService(PersistenceEntryManager persistenceEntryManager,String configEntryDn) {
 
-        this.ldapEntryManager = ldapEntryManager;
+        this.persistenceEntryManager = persistenceEntryManager;
         this.configEntryDn = configEntryDn;
     }
 
     public RadiusClient getRadiusClient(String ipaddress) {
 
         try {
-            Filter searchFilter = createRadiusClientSearchFilter(ipaddress);
-            List<RadiusClient> clients = ldapEntryManager.findEntries(configEntryDn,RadiusClient.class,searchFilter,SearchScope.SUB);
+            Filter searchFilter = searchByIpAddressFilter(ipaddress);
+            List<RadiusClient> clients = persistenceEntryManager.findEntries(configEntryDn,RadiusClient.class,searchFilter);
             if(clients.size()==0)
                 return null;
             return clients.get(0);
@@ -37,9 +37,18 @@ public class RadiusClientService  {
         }
     }
 
-    private Filter createRadiusClientSearchFilter(String ipaddress) {
+    public List<RadiusClient> getRadiusClients() {
 
-        Filter ipFilter  = Filter.createEqualityFilter("oxRadiusClientIpAddress",ipaddress);
-        return ipFilter;
+        try {
+            return persistenceEntryManager.findEntries(configEntryDn,RadiusClient.class,null);
+        }catch(EntryPersistenceException e) {
+            throw new ServiceException("Failed fetching clients",e);
+        }
+    }
+
+    private Filter searchByIpAddressFilter(String ipaddress) {
+
+       Filter ipFilter  = Filter.createEqualityFilter("oxRadiusClientIpAddress",ipaddress);
+       return ipFilter;
     } 
 }

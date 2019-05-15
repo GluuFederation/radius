@@ -1,43 +1,65 @@
 package org.gluu.radius.server;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
+import org.gluu.radius.model.RadiusClient;
+import org.gluu.radius.service.RadiusClientService;
+import org.gluu.radius.util.EncDecUtil;
 
 public final class GluuRadiusServer implements RadiusEventListener {
 
+    public class RadiusClientComparator implements Comparator<RadiusClient> {
+
+        @Override
+        public int compare(RadiusClient first, RadiusClient second) {
+            if(first.getPriority() < second.getPriority())
+                return -1;
+            else if(first.getPriority() > second.getPriority())
+                return 1;
+            else
+                return 0;
+        }
+    }
+
     private static final Logger log = Logger.getLogger(GluuRadiusServer.class);
     private RunConfiguration runConfig;
-    private RadiusServerAdapter rsAdapter;
+    private RadiusServerAdapter radiusServerAdapter;
+    private RadiusClientService radiusClientService;
+    private String salt;
 
-    public GluuRadiusServer(RunConfiguration runConfig,RadiusServerAdapter rsAdapter) {
+    public GluuRadiusServer(RunConfiguration runConfig,RadiusServerAdapter radiusServerAdapter,
+        RadiusClientService radiusClientService,String salt) {
 
         if(runConfig!=null)
             this.runConfig = runConfig;
         else
             this.runConfig = new RunConfiguration();
         
-        this.rsAdapter = rsAdapter;
+        this.radiusServerAdapter = radiusServerAdapter;
+        this.radiusClientService = radiusClientService;
+        this.salt = salt;
     }
 
     public final GluuRadiusServer run() {
 
-        rsAdapter.configureServer(runConfig.getListenInterface(),
+        radiusServerAdapter.configureServer(runConfig.getListenInterface(),
             runConfig.getAuthListenPort(),
             runConfig.getAcctListenPort());
         
-        rsAdapter.registerRadiusEventListener(this);
-        rsAdapter.runServer();
+        radiusServerAdapter.registerRadiusEventListener(this);
+        radiusServerAdapter.runServer();
         return this;
     }
 
     public final GluuRadiusServer stop() {
 
-        rsAdapter.stopServer();
+        radiusServerAdapter.stopServer();
         return this;
     }
 
+    @Override
     public void onAccessRequest(AccessRequestContext context) {
 
         boolean granted = false;
@@ -51,19 +73,24 @@ public final class GluuRadiusServer implements RadiusEventListener {
         context.setGranted(granted);
     }
 
+    @Override
     public void onAccountingRequest(AccountingRequestContext context) {
 
         for(AccountingRequestFilter filter: runConfig.getAccountingRequestFilters())
             filter.processAccountingRequest(context);
     }
 
+    @Override
     public void onSharedSecretRequest(SharedSecretRequestContext context) {
-
-        for(SharedSecretProvider ssProvider : runConfig.getSharedSecretProviders()) {
-            String sharedSecret = ssProvider.getSharedSecret(context.getClientIpAddress());
-            if(sharedSecret!=null) {
-                context.setSharedSecret(sharedSecret);
-                break;
+        List<RadiusClient> clients = radiusClientService.getRadiusClients();
+        clients.sort(new RadiusClientComparator());
+        for(RadiusClient client : clients) {
+            for(RadiusClientMatcher matcher : runConfig.getClientMatchers()) {
+                if(matcher.match(context.getClientIpAddress(), client)) {
+                    String secret = EncDecUtil.decode(client.getSecret(),salt);
+                    context.setSharedSecret(secret);
+                    break;
+                }
             }
         }
     }

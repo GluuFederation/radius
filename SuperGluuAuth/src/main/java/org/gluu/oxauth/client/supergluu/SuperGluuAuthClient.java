@@ -1,16 +1,6 @@
 package org.gluu.oxauth.client.supergluu;
 
 
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.cookie.CookieSpecProvider;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
-import org.apache.http.impl.cookie.RFC6265CookieSpecProvider;
-import org.apache.http.protocol.HttpContext;
 import org.apache.log4j.Logger;
 
 import org.gluu.oxauth.client.supergluu.impl.http.HttpContextFactory;
@@ -19,14 +9,14 @@ import org.gluu.oxauth.client.supergluu.impl.IHttpClientFactory;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusClient;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusResponse;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
-import org.xdi.oxauth.client.TokenClient;
-import org.xdi.oxauth.client.TokenRequest;
-import org.xdi.oxauth.client.TokenResponse;
-import org.xdi.oxauth.model.common.AuthenticationMethod;
-import org.xdi.oxauth.model.common.GrantType;
-import org.xdi.oxauth.model.crypto.AbstractCryptoProvider;
-import org.xdi.oxauth.model.exception.InvalidJwtException;
-import org.xdi.oxauth.model.jwt.Jwt;
+import org.gluu.oxauth.client.TokenClient;
+import org.gluu.oxauth.client.TokenRequest;
+import org.gluu.oxauth.client.TokenResponse;
+import org.gluu.oxauth.model.common.AuthenticationMethod;
+import org.gluu.oxauth.model.common.GrantType;
+import org.gluu.oxauth.model.crypto.AbstractCryptoProvider;
+import org.gluu.oxauth.model.exception.InvalidJwtException;
+import org.gluu.oxauth.model.jwt.Jwt;
 
 
 
@@ -128,7 +118,7 @@ public class SuperGluuAuthClient {
 
         String idtoken = response.getIdToken();
         if (idtoken == null || (idtoken != null && idtoken.isEmpty())) {
-            log.debug("SuperGluu initial auth failed. No id_token returned");
+            log.debug("SuperGluu initial auth failed. No id_token returned. " + response.getEntity());
             return false;
         }
         return parseCurrentIdToken(idtoken);

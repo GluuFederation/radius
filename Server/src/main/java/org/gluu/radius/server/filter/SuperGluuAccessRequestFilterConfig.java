@@ -7,7 +7,7 @@ import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.service.BootstrapConfigService;
 import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.util.EncDecUtil;
-import org.xdi.oxauth.model.crypto.signature.SignatureAlgorithm;
+import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class SuperGluuAccessRequestFilterConfig {
     
@@ -53,9 +53,12 @@ public class SuperGluuAccessRequestFilterConfig {
     public List<String> getScopes() {
         
         List<String> scopes = new ArrayList<String>();
-        for(ServerConfiguration.AuthScope authScope: serverConfig.getScopes())
-            scopes.add(authScope.getName());
-        
+        for(ServerConfiguration.AuthScope authScope: serverConfig.getScopes()) {
+            if(authScope.getName() != null)
+                scopes.add(authScope.getName());
+            else if(authScope.getId() != null)
+                scopes.add(authScope.getId());
+        }    
         return scopes;
     }
 
