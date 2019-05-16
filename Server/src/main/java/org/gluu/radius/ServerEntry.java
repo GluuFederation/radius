@@ -20,8 +20,6 @@ import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.ServerConfigService;
 
 
-
-
 public class ServerEntry {
 
     private static final Logger log = Logger.getLogger(ServerEntry.class);
