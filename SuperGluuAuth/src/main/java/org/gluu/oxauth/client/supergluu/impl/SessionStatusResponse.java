@@ -5,8 +5,8 @@ import java.io.Serializable;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import org.gluu.oxauth.client.supergluu.impl.model.SessionState;
 import org.gluu.oxauth.client.supergluu.impl.model.SessionCustomState;
