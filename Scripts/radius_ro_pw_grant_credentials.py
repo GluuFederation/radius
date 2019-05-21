@@ -55,7 +55,6 @@ class ResourceOwnerPasswordCredentials(ResourceOwnerPasswordCredentialsType):
         if configurationAttributes.containsKey("application_id"):
             self.applicationId = configurationAttributes.get("application_id").getValue2()
         
-
         credentialsFile = configurationAttributes.get("credentials_file").getValue2()
 
         if configurationAttributes.containsKey("push_notification_title"):

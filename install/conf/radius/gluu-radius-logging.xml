@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties name="LOG_PATTERN">%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %p %m%n</Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+        <RollingFile name="FileLog" fileName="/opt/gluu/radius/logs/gluu-radius.log" 
+            filePattern="/opt/gluu/radius/logs/gluu-radius-%d{yyyy-mm-dd}-%i.log">
+            <LevelRangeFilter minLevel="TRACE" maxLevel="FATAL" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </RollingFile>
+        <Policies>
+            <SizeBasedTriggeringPolicy size="19500kb"/>
+        </Policies>
+        <DefaultRolloverStrategy max="10"/>
+    </Appenders>
+
+    <Loggers>
+
+        <Root level="all">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="FileLog"/>
+        </Root>
+        
+    </Loggers>
+</Configuration>
