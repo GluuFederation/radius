@@ -89,9 +89,7 @@ public class ServerEntry {
             log.error("Error Starting GluuRadiusServer. Exiting ... ");
             System.exit(-1);
         }
-        log.info("done");
-        
-
+        log.info("Initialization complete");
         
     }
 
