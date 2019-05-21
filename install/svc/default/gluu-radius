@@ -39,7 +39,7 @@ GLUU_RADIUS_INSTALL_DIR=/opt/gluu/radius/
 #####################################################
 # Gluu Radius Configuration Directory
 #####################################################
-GLUU_RADIUS_CONFIG_DIR=/etc/gluu/
+GLUU_RADIUS_CONFIG_DIR=/etc/gluu/conf/radius
 
 #####################################################
 # Gluu Radius application configuration file
