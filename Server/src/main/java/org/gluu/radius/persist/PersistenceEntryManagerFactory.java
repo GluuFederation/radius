@@ -17,7 +17,11 @@ public class PersistenceEntryManagerFactory {
 
         try {
             LdapEntryManagerFactory ldapEntryManagerFactory = new LdapEntryManagerFactory();
-            return ldapEntryManagerFactory.createEntryManager(properties);
+            Properties connProps = createConnectionProperties(properties,ldapEntryManagerFactory.getPersistenceType());
+            PersistenceEntryManager ret = ldapEntryManagerFactory.createEntryManager(connProps);
+            if(ret == null)
+                throw new GenericPersistenceException("Could not create persistence entry manager");
+            return ret;
         }catch(ConfigurationException e) {
             throw new GenericPersistenceException(e.getMessage(),e);
         }
@@ -28,10 +32,23 @@ public class PersistenceEntryManagerFactory {
         try {
             CouchbaseEntryManagerFactory couchbaseEntryManagerFactory = new CouchbaseEntryManagerFactory();
             couchbaseEntryManagerFactory.create();
-            return couchbaseEntryManagerFactory.createEntryManager(properties);
+            Properties connProps = createConnectionProperties(properties,couchbaseEntryManagerFactory.getPersistenceType());
+            PersistenceEntryManager ret = couchbaseEntryManagerFactory.createEntryManager(connProps);
+            if(ret == null)
+                throw new GenericPersistenceException("Could not create persistence entry manager");
+            
+            return ret;
         }catch(ConfigurationException e) {
             throw new GenericPersistenceException(e.getMessage(),e);
         }
     }
 
+    private static final Properties createConnectionProperties(Properties properties,String connPrefix) {
+
+        Properties connProps = new Properties();
+        for(String propname : properties.stringPropertyNames()) {
+            connProps.setProperty(connPrefix+"."+propname,properties.getProperty(propname));
+        }
+        return connProps;
+    }
 }
