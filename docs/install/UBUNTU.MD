@@ -17,6 +17,7 @@ We will assume you have the following:
  ```
  $ git clone https://github.com/GluuFederation/radius.git
  $ cd radius
+ $ git checkout -b version_1.1 origin/version_1.1
  $ mvn package
  ```
 2. Without leaving the radius source code directory from your terminal , create required directories 
@@ -153,7 +154,7 @@ Logs can be found under /opt/gluu/radius/logs
  Download and install [RadLogin4](https://www.iea-software.com/products/radiusnt/radlogin4.cfm)
  It's user interface is available on http://localhost:8020/ 
  Add a Radius server (with your server's ip and port) and then test using the user's credentials.
- 
+
 
 
 
