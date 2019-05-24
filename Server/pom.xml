@@ -67,16 +67,6 @@
       <version>1.1-SNAPSHOT</version>
     </dependency>
 
-    <!-- apache log4j (scope provided so it doesn't end up in the classpath) -->
-    <!--
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-      <scope>provided</scope>
-    </dependency>
-     -->
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
@@ -98,9 +88,8 @@
   </dependencies>
 
   <build>
-    
+    <finalName>${project.artifactId}</finalName>
     <plugins>
-
       <!-- compiler plugin -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
