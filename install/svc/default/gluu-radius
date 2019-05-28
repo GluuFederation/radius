@@ -21,8 +21,8 @@ JVM_ARGS=
 # user and group under which Gluu Radius 
 # will run
 #####################################################
-GLUU_RADIUS_USER=<user>
-GLUU_RADIUS_GROUP=<group>
+GLUU_RADIUS_USER=radius
+GLUU_RADIUS_GROUP=gluu
 
 #####################################################
 # Gluu Radius PID file directory
@@ -33,64 +33,34 @@ GLUU_RADIUS_PID_DIR=/var/run
 # Gluu Radius Installation Directory
 # This will be our working directory
 #####################################################
-GLUU_RADIUS_INSTALL_DIR=<install_dir>
+GLUU_RADIUS_INSTALL_DIR=/opt/gluu/radius/
 
-#####################################################
-# Gluu Radius lib (jar) directory
-# This directory is relative to the installation 
-# directory
-#####################################################
-GLUU_RADIUS_LIB_DIR=<lib_dir>
 
 #####################################################
 # Gluu Radius Configuration Directory
 #####################################################
-GLUU_RADIUS_CONFIG_DIR=<config_dir>
-
-
-#####################################################
-# Gluu Radius Java system property values
-# - Wait Timeout. This value is used to wait until
-#   component/operation gluu radius depends on is
-#	ready. That is if the the operation/communication
-#   with the component fails. The value is in seconds.
-# - Retry count. This is number of time we will retry
-# 	communication with the component or the operation 
-#   before we give up.
-#
-# The default is to retry every 10 seconds and 
-# give up after 60 tries. Which gives us about 10 
-# minutes.
-#####################################################
-GLUU_RADIUS_WAIT_TIMEOUT=10
-GLUU_RADIUS_RETRY_COUNT=60
-
-#####################################################
-# Estimated time for gluu radius to stop after it 
-# receives a SIGTERM signal (in seconds)
-#####################################################
-GLUU_RADIUS_SHUTDOWN_TIME=10
+GLUU_RADIUS_CONFIG_DIR=/etc/gluu/conf/radius
 
 #####################################################
 # Gluu Radius application configuration file
 #####################################################
-GLUU_RADIUS_APP_CONFIG=$GLUU_RADIUS_CONFIG_DIR/ox-radius.properties
+GLUU_RADIUS_APP_CONFIG=$GLUU_RADIUS_CONFIG_DIR/gluu-radius.properties
 
 #####################################################
-#  Gluu Radius log4j configuration file 
+#  Gluu Radius log4j2 configuration file 
 #####################################################
-GLUU_RADIUS_LOG4J_CONFIG=$GLUU_RADIUS_CONFIG_DIR/ox-radius-logging.properties
+GLUU_RADIUS_LOG4J2_CONFIG=$GLUU_RADIUS_CONFIG_DIR/gluu-radius-logging.xml
 
 #####################################################
 # Gluu Radius jar file 
 # Change this to reflect version bumps
 #####################################################
-GLUU_RADIUS_JAR=<gluu_radius_jar>
+GLUU_RADIUS_JAR=super-gluu-radius-server.jar
 
 #####################################################
 # Gluu Radius main class (Java)
 #####################################################
-GLUU_RADIUS_JAVA_MAIN=org.gluu.radius.GluuRadius
+GLUU_RADIUS_JAVA_MAIN=org.gluu.radius.ServerEntry
 
 
 #####################################################
@@ -98,8 +68,7 @@ GLUU_RADIUS_JAVA_MAIN=org.gluu.radius.GluuRadius
 # We build them here from the options above 
 # no need to modify them
 #####################################################
-GLUU_RADIUS_LOG4J_PROPS="-Dlog4j.configuration=file:$GLUU_RADIUS_LOG4J_CONFIG"
-GLUU_RADIUS_INIT_PROPS="-Dradius.wait_timeout=$GLUU_RADIUS_WAIT_TIMEOUT -Dradius.retrycount=$GLUU_RADIUS_RETRY_COUNT"
-GLUU_RADIUS_PROPS="$GLUU_RADIUS_LOG4J_PROPS $GLUU_RADIUS_INIT_PROPS"
-GLUU_RADIUS_CLASSPATH="-cp $GLUU_RADIUS_JAR:$GLUU_RADIUS_LIB_DIR/*"
+GLUU_RADIUS_LOG4J_PROPS="-Dlog4j.configurationFile=file:$GLUU_RADIUS_LOG4J2_CONFIG"
+GLUU_RADIUS_PROPS="$GLUU_RADIUS_LOG4J_PROPS"
+GLUU_RADIUS_CLASSPATH="-cp $GLUU_RADIUS_JAR"
 GLUU_RADIUS_OPTS="$JVM_OPTS $GLUU_RADIUS_PROPS $GLUU_RADIUS_CLASSPATH $GLUU_RADIUS_JAVA_MAIN $GLUU_RADIUS_APP_CONFIG"

@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.xdi.oxauth.model.crypto.AbstractCryptoProvider;
-import org.xdi.oxauth.model.crypto.signature.SignatureAlgorithm;
-import org.xdi.oxauth.model.common.AuthenticationMethod;
+import org.gluu.oxauth.model.crypto.AbstractCryptoProvider;
+import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
+import org.gluu.oxauth.model.common.AuthenticationMethod;
 
 public class SuperGluuAuthClientConfig {
 

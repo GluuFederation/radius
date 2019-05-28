@@ -14,7 +14,7 @@ import org.gluu.oxauth.client.supergluu.impl.model.SessionCustomState;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusRequest;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusResponse;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
-import org.xdi.oxauth.client.BaseClient;
+import org.gluu.oxauth.client.BaseClient;
 
 
 public class SessionStatusClient extends BaseClient<SessionStatusRequest,SessionStatusResponse> {

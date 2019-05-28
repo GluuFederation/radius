@@ -1,28 +1,28 @@
 package org.gluu.radius.service;
 
-import com.unboundid.ldap.sdk.Filter;
 
 import java.util.List;
 
-import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.apache.log4j.Logger;
+
+import org.gluu.persist.PersistenceEntryManager;
+import org.gluu.persist.exception.EntryPersistenceException;
+import org.gluu.persist.model.SearchScope;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.ServerConfiguration;
-import org.gluu.site.ldap.persistence.exception.EntryPersistenceException;
+import org.gluu.search.filter.Filter;
 
-import org.xdi.ldap.model.SearchScope;
-
-import org.apache.log4j.Logger;
 
 public class ServerConfigService {
 
     private static final Logger log = Logger.getLogger(ServerConfigService.class);
 
     private String configEntryDn;
-    private LdapEntryManager ldapEntryManager;
+    private PersistenceEntryManager persistenceEntryManager;
 
-    public ServerConfigService(LdapEntryManager ldapEntryManager,String configEntryDn) {
+    public ServerConfigService(PersistenceEntryManager persistenceEntryManager,String configEntryDn) {
 
-        this.ldapEntryManager = ldapEntryManager;
+        this.persistenceEntryManager = persistenceEntryManager;
         this.configEntryDn = configEntryDn;
     }
 
@@ -30,8 +30,9 @@ public class ServerConfigService {
 
         try {
             Filter searchFilter = createServerConfigurationSearchFilter();
-            List<ServerConfiguration> serverConfigs = ldapEntryManager.findEntries(configEntryDn,ServerConfiguration.class,
-                searchFilter,SearchScope.BASE);
+            String [] attributes = null;
+            List<ServerConfiguration> serverConfigs = persistenceEntryManager.findEntries(configEntryDn,ServerConfiguration.class,
+                searchFilter,SearchScope.BASE,attributes,0,1,1);
             if(serverConfigs.size() == 0)
                 return null;
             ServerConfiguration serverConfig = serverConfigs.get(0);
@@ -53,8 +54,9 @@ public class ServerConfigService {
     private final ServerConfiguration.AuthScope getScope(String scopeDn) {
 
         try {
-           List<ServerConfiguration.AuthScope> foundScopes = ldapEntryManager.findEntries(scopeDn,
-           ServerConfiguration.AuthScope.class,null,SearchScope.BASE);
+           String [] attributes = null;
+           List<ServerConfiguration.AuthScope> foundScopes = persistenceEntryManager.findEntries(scopeDn,
+           ServerConfiguration.AuthScope.class,null,SearchScope.BASE,attributes,0,1,1);
            if (foundScopes.isEmpty())
                 return null;
             else

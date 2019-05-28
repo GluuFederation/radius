@@ -1,6 +1,6 @@
 package org.gluu.oxauth.client.supergluu.impl;
 
-import org.xdi.oxauth.client.BaseRequest;
+import org.gluu.oxauth.client.BaseRequest;
 
 public class SessionStatusRequest extends BaseRequest {
 

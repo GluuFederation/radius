@@ -5,8 +5,8 @@ import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.KnownService;
 import org.gluu.radius.service.ServerConfigService;
 import org.gluu.radius.ServiceLocator;
-import org.xdi.oxauth.client.OpenIdConfigurationClient;
-import org.xdi.oxauth.client.OpenIdConfigurationResponse;
+import org.gluu.oxauth.client.OpenIdConfigurationClient;
+import org.gluu.oxauth.client.OpenIdConfigurationResponse;
 
 public class OpenIdConfigurationService {
 

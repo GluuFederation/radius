@@ -1,8 +1,9 @@
 package org.gluu.oxauth.client.supergluu.impl.crypto;
 
+
 import org.gluu.oxauth.client.supergluu.impl.ICryptoProviderFactory;
-import org.xdi.oxauth.model.crypto.AbstractCryptoProvider;
-import org.xdi.oxauth.model.crypto.OxAuthCryptoProvider;
+import org.gluu.oxauth.model.crypto.AbstractCryptoProvider;
+import org.gluu.oxauth.model.crypto.OxAuthCryptoProvider;
 
 
 public class SingletonOxAuthCryptoProviderFactory implements ICryptoProviderFactory {

@@ -6,16 +6,20 @@ import java.util.Properties;
 
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.util.EncDecUtil;
-import org.xdi.oxauth.model.crypto.signature.SignatureAlgorithm;
+import org.gluu.radius.persist.PersistenceBackendType;
+import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class BootstrapConfigService  {
 
     private enum BootstrapConfigKeys {
         SaltFile("radius.config.saltfile"),
-        LdapConfigFile("radius.config.oxldap"),
+        PersistenceConfigFile("radius.persist.config"),
+        PersistenceBackend("radius.persist.backend"),
         JwtKeyStoreFile("radius.jwt.keyStoreFile"),
         JwtKeyStorePin("radius.jwt.keyStorePin"),
         JwtAuthKeyId("radius.jwt.auth.keyId"),
+        ConfigDN("radius.config_DN"),
+        ClientsDN("radius.clients_DN"),
         JwtAuthSignatureAlgorithm("radius.jwt.auth.signAlgorithm");
 
         private String keyName;
@@ -33,16 +37,18 @@ public class BootstrapConfigService  {
 
     private static final String encodeSaltKey = "encodeSalt";
     private static final String bindPasswordKey = "bindPassword";
+    private static final String authPasswordKey = "auth.userPassword";
     private static final String trustStorePinKey = "ssl.trustStorePin";
-    private static final String oxRadiusConfigEntryDnKey = "oxradius_ConfigurationEntryDN";
-    private static final String oxRadiusClientConfigRdn = "ou=clients";
-
+    
     private String salt;
-    private Properties oxLdapConfig;
+    private Properties persistenceConfig;
+    private PersistenceBackendType persistenceBackend;
     private String jwtKeyStoreFile;
     private String jwtKeyStorePin;
     private String jwtAuthKeyId;
     private SignatureAlgorithm jwtAuthSignAlgo;
+    private String configDN;
+    private String clientsDN;
 
     public BootstrapConfigService(String appConfigFile) { 
 
@@ -54,9 +60,17 @@ public class BootstrapConfigService  {
 
         this.salt = loadEncodeSalt(saltFile);
 
-        String ldapConfigFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.LdapConfigFile.getKeyName()); 
+        String backend = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceBackend.getKeyName());
+        if (backend.equalsIgnoreCase("couchbase")) {
+            this.persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_LDAP;
+        }else if(backend.equalsIgnoreCase("ldap")) {
+            this.persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_LDAP;
+        }else
+            throw new ServiceException("Unknown persistence backend specified");
 
-        this.oxLdapConfig = loadPropertiesFromFile(ldapConfigFile);
+        String persistenceConfigFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceConfigFile.getKeyName()); 
+
+        this.persistenceConfig = loadPropertiesFromFile(persistenceConfigFile);
 
         this.jwtKeyStoreFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStoreFile.getKeyName());
         this.jwtKeyStorePin  = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStorePin.getKeyName());
@@ -64,6 +78,9 @@ public class BootstrapConfigService  {
         this.jwtAuthKeyId = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthKeyId.getKeyName());
         String signalgo = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthSignatureAlgorithm.getKeyName());
         this.jwtAuthSignAlgo = SignatureAlgorithm.fromString(signalgo);
+
+        this.configDN = oxRadiusConfig.getProperty(BootstrapConfigKeys.ConfigDN.getKeyName());
+        this.clientsDN = oxRadiusConfig.getProperty(BootstrapConfigKeys.ClientsDN.getKeyName());
     }
 
     public final String getEncodeSalt() {
@@ -71,24 +88,38 @@ public class BootstrapConfigService  {
         return this.salt;
     }
 
-    public final Properties getLdapConnectionParams() {
+    public PersistenceBackendType getPersistenceBackend() {
 
-        Properties props = (Properties) oxLdapConfig.clone();
-        props.setProperty(bindPasswordKey,
-            EncDecUtil.decode(props.getProperty(bindPasswordKey),salt));
-        props.setProperty(trustStorePinKey,
-            EncDecUtil.decode(props.getProperty(trustStorePinKey),salt));
+        return this.persistenceBackend;
+    }
+
+    public final Properties getPersistenceConnectionParams() {
+
+        Properties props =  (Properties) persistenceConfig.clone();
+
+        if(persistenceBackend == PersistenceBackendType.PERSISTENCE_BACKEND_LDAP) {
+            props.setProperty(bindPasswordKey,
+                EncDecUtil.decode(props.getProperty(bindPasswordKey),salt));
+            
+        }else if (persistenceBackend == PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE) {
+            props.setProperty(authPasswordKey,
+                EncDecUtil.decode(props.getProperty(authPasswordKey),salt));
+        }
+        if(props.getProperty(trustStorePinKey)!=null && !props.getProperty(trustStorePinKey).isEmpty()) {
+            props.setProperty(trustStorePinKey,
+                EncDecUtil.decode(props.getProperty(trustStorePinKey),salt));
+        }
         return props;
     }
 
     public final String getRadiusConfigDN() {
 
-        return oxLdapConfig.getProperty(oxRadiusConfigEntryDnKey);
+        return this.configDN;
     }
 
     public final String getRadiusClientConfigDN() {
 
-        return oxRadiusClientConfigRdn + "," + getRadiusConfigDN();
+        return this.clientsDN;
     }
 
     public final String getJwtKeyStoreFile() {

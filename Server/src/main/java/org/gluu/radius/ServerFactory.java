@@ -1,7 +1,5 @@
 package org.gluu.radius;
 
-import org.apache.log4j.Logger;
-
 import org.gluu.radius.exception.ServerFactoryException;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.ServerConfiguration;
@@ -10,7 +8,8 @@ import org.gluu.radius.KnownService;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.server.filter.SuperGluuAccessRequestFilter;
 import org.gluu.radius.server.filter.SuperGluuAccessRequestFilterConfig;
-import org.gluu.radius.server.provider.RadiusClientSharedSecretProvider;
+import org.gluu.radius.server.matcher.IpAddressMatcher;
+import org.gluu.radius.server.matcher.CidrSubnetMatcher;
 import org.gluu.radius.server.RadiusServerAdapter;
 import org.gluu.radius.server.RunConfiguration;
 import org.gluu.radius.server.tinyradius.TinyRadiusServerAdapter;
@@ -21,15 +20,15 @@ import org.gluu.radius.service.ServerConfigService;
 
 public class ServerFactory {
 
-    private static final Logger log = Logger.getLogger(ServerFactory.class);
-
     private ServerFactory() {
 
     }
 
     public static final GluuRadiusServer createServer() {
 
-        return new GluuRadiusServer(createRunConfiguration(),createServerAdapter());
+        RadiusClientService rcService = ServiceLocator.getService(KnownService.RadiusClient);
+        BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
+        return new GluuRadiusServer(createRunConfiguration(),createServerAdapter(),rcService,bcService.getEncodeSalt());
     }
 
     private static final RadiusServerAdapter createServerAdapter() {
@@ -41,21 +40,16 @@ public class ServerFactory {
 
         ServerConfiguration serverConfig = getServerConfiguration();
         RunConfiguration runConfig = RunConfiguration.fromServerConfiguration(serverConfig);
-        addSharedSecretProviders(runConfig);
+        addClientMatchers(runConfig);
         addAccessRequestFilters(runConfig);
         addAccountingRequestFilters(runConfig);
         return runConfig;
     }
 
-    private static final void addSharedSecretProviders(RunConfiguration runConfig) {
+    private static final void addClientMatchers(RunConfiguration runConfig) {
 
-        RadiusClientService rcService = ServiceLocator.getService(KnownService.RadiusClient);
-        BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
-
-        runConfig.addSharedSecretProvider(new RadiusClientSharedSecretProvider(
-            rcService,bcService.getEncodeSalt()
-        ));
-
+        runConfig.addClientMatcher(new IpAddressMatcher());
+        runConfig.addClientMatcher(new CidrSubnetMatcher());
     }
 
     public static final void addAccessRequestFilters(RunConfiguration runConfig) {

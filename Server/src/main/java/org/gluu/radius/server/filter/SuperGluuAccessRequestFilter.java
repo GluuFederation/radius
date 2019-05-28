@@ -4,7 +4,7 @@ import org.apache.log4j.Logger;
 import org.gluu.radius.exception.GluuRadiusException;
 import org.gluu.radius.server.AccessRequestContext;
 import org.gluu.radius.server.AccessRequestFilter;
-import org.xdi.oxauth.model.crypto.signature.SignatureAlgorithm;
+import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 import org.gluu.oxauth.client.supergluu.SuperGluuAuthClient;
 import org.gluu.oxauth.client.supergluu.SuperGluuAuthClientConfig;
 import org.gluu.oxauth.client.supergluu.SuperGluuAuthStatus;
@@ -35,7 +35,7 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
             this.authClientConfig = new SuperGluuAuthClientConfig(keyId,signAlgo,audience);
             this.authClientConfig.setClientId(clientId);
         }catch(Exception e) {
-            log.warn("Using PRIVATE_KEY_JWT auth failed. Trying CLIENT_SECRET_BASIC");
+            log.warn("Using PRIVATE_KEY_JWT auth failed. Trying CLIENT_SECRET_BASIC",e);
             String clientId = filterConfig.getOpenidUsername();
             String clientSecret = filterConfig.getOpenidPassword();
             this.authClientConfig = new SuperGluuAuthClientConfig(clientId,clientSecret);
@@ -59,14 +59,15 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
             String ipaddress = arContext.getClientIpAddress();
             String username  = arContext.getUsername();
             String password  = arContext.getPassword();
-            log.debug("Initiating authentication for user " + username);
+            log.debug(String.format("Initiating authentication for user {%s}.",username));
             long authStartTime = System.currentTimeMillis();
             Boolean initialauth = authClient.initiateAuthentication(username, password,ipaddress);
             if(initialauth == null || (initialauth != null && initialauth == false)) {
-                log.debug("Initiating authentication failed for user " + username);
+                log.debug(String.format("Auth init failed for user {%s}.",username));
                 return false;
             }
 
+            log.debug(String.format("User {%s} auth init success. Checking auth status(super-gluu).",username));
             SuperGluuAuthStatus authStatus = SuperGluuAuthStatus.UNAUTHENTICATED;
             while((System.currentTimeMillis() - authStartTime) < authenticationTimeout) {
                authStatus = authClient.checkAuthenticationStatus();
@@ -80,22 +81,24 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
             }
             
             if(authStatus == SuperGluuAuthStatus.UNAUTHENTICATED) {
-                log.debug("Auth timeout while authenticating user " + username);
+                log.debug(String.format("Timeout reached while checking auth status for user {%s}.",username));
                 return false;
             }
 
-            log.debug("Performing authentication verification for user " + username);
+            log.debug(String.format("Auth status ok. Performing additional verification for user {%s}.",username));
             Boolean verifyauth = authClient.verifyAuthentication(username, password);
             if(verifyauth == null || (verifyauth!=null && verifyauth == false)) {
-                log.debug("Authentication verification failed for user " + username);
+                log.debug(String.format("Authentication verification failed for user {%s}.",username));
                 return false;
             }
-            log.debug("User " + username + " authentication successfully");
+            log.debug(String.format("User {%s} successfully authenticated.",username));
             return true;
         }catch(GluuRadiusException e) {
-            log.info("auth failed for user "+arContext.getUsername(),e);
+            String username = arContext.getUsername();
+            log.debug(String.format("auth failed for user {%s}.",username),e);
         }catch(Exception e) {
-            log.info("auth failed for user "+arContext.getUsername(),e);
+            String username = arContext.getUsername();
+            log.debug(String.format("auth failed for user {%s}.",username),e);
         }
         return false;
     }

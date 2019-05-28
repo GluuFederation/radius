@@ -7,7 +7,7 @@
 # Required-Stop:  $local_fs $network
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
-# Short-Description: Gluu Radius Start Script
+# Short-Description: Gluu Radius Server Start Script
 # Description: Start Gluu Radius Server
 ### END INIT INFO
 
@@ -16,7 +16,7 @@
 # description: Start Super Gluu Radius Server
 #
 
-# Super Gluu Radius (oxradius) daemon script 
+# Super Gluu Radius Server daemon script 
 # Copyright (c) Gluu Inc.
 # Author Rolain Djeumen <rolain@gluu.org>
 
@@ -109,7 +109,7 @@ do_stop()
 		--user $GLUU_RADIUS_USER \
 		--pidfile $PIDFILE \
 		--exec "${JAVA}" \
-		--retry TERM/$GLUU_RADIUS_SHUTDOWN_TIME/KILL/5
+		--retry TERM/5/KILL/5
 
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2

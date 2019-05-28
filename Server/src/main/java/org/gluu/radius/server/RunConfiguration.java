@@ -12,7 +12,7 @@ public class RunConfiguration {
     private Integer acctListenPort;
     private List<AccessRequestFilter> accessRequestFilters;
     private List<AccountingRequestFilter> accountingRequestFilters;
-    private List<SharedSecretProvider> sharedSecretProviders;
+    private List<RadiusClientMatcher> clientMatchers;
 
     public RunConfiguration() {
 
@@ -21,7 +21,7 @@ public class RunConfiguration {
         this.acctListenPort  = ServerConfiguration.DEFAULT_RADIUS_ACCT_PORT;
         this.accessRequestFilters = new ArrayList<AccessRequestFilter>();
         this.accountingRequestFilters = new ArrayList<AccountingRequestFilter>();
-        this.sharedSecretProviders = new ArrayList<SharedSecretProvider>(); 
+        this.clientMatchers = new ArrayList<RadiusClientMatcher>(); 
     }
 
     public String getListenInterface() {
@@ -79,14 +79,14 @@ public class RunConfiguration {
         return this;
     }
 
-    public List<SharedSecretProvider> getSharedSecretProviders() {
+    public List<RadiusClientMatcher> getClientMatchers() {
 
-        return this.sharedSecretProviders;
+        return this.clientMatchers;
     }
 
-    public RunConfiguration addSharedSecretProvider(SharedSecretProvider sharedSecretProvider) {
+    public RunConfiguration addClientMatcher(RadiusClientMatcher clientMatcher) {
 
-        sharedSecretProviders.add(sharedSecretProvider);
+        clientMatchers.add(clientMatcher);
         return this;
     }
 

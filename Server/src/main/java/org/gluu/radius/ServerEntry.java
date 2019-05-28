@@ -1,14 +1,17 @@
 package org.gluu.radius;
 
 import java.security.Security;
+import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.gluu.radius.exception.GenericLdapException;
+import org.gluu.persist.PersistenceEntryManager;
+import org.gluu.radius.exception.GenericPersistenceException;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.exception.ServerException;
 import org.gluu.radius.exception.ServerFactoryException;
-import org.gluu.radius.ldap.LdapEntryManagerFactory;
+import org.gluu.radius.persist.PersistenceBackendType;
+import org.gluu.radius.persist.PersistenceEntryManagerFactory;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.server.lifecycle.*;
 import org.gluu.radius.service.BootstrapConfigService;
@@ -16,14 +19,11 @@ import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.ServerConfigService;
 
-import org.gluu.site.ldap.persistence.LdapEntryManager;
-
-
 
 public class ServerEntry {
 
     private static final Logger log = Logger.getLogger(ServerEntry.class);
-    private static LdapEntryManager ldapEntryManager = null;
+    private static PersistenceEntryManager persistenceEntryManager = null;
 
     public static void main(String[] args) {
 
@@ -50,12 +50,18 @@ public class ServerEntry {
         }
         log.info("done");
 
+        log.info("Initializing persistence layer ... ");
         try {
-            ldapEntryManager = createLdapEntryManager();
-        }catch(GenericLdapException e) {
-            log.error("LdapEntryManager creation failed. Exiting ... ",e);
+            persistenceEntryManager = createPersistenceEntryManager();
+            if(persistenceEntryManager == null) {
+                log.error("Could not initialize persistence layer. Exiting ... ");
+                System.exit(-1);
+            }
+        }catch(GenericPersistenceException e) {
+            log.error("PersistenceEntryManager creation failed. Exiting ... ",e);
             System.exit(-1);
         }
+        log.info("done");
 
         log.info("Registering RadiusClientService ... ");
         if(!registerRadiusClientService()) {
@@ -73,7 +79,7 @@ public class ServerEntry {
 
         log.info("Registering OpenIdConfigurationService ...");
         if(!registerOpenIdConfigurationService()) {
-            log.error("OPenIdConfigurationService registration failed. Exiting ... ");
+            log.error("OpenIdConfigurationService registration failed. Exiting ... ");
             System.exit(-1);
         }
         log.info("done");
@@ -83,9 +89,7 @@ public class ServerEntry {
             log.error("Error Starting GluuRadiusServer. Exiting ... ");
             System.exit(-1);
         }
-        log.info("done");
-        
-
+        log.info("Initialization complete");
         
     }
 
@@ -120,7 +124,7 @@ public class ServerEntry {
     private static final boolean registerRadiusClientService() {
 
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
-        RadiusClientService rcService = new RadiusClientService(ldapEntryManager,bcService.getRadiusClientConfigDN());
+        RadiusClientService rcService = new RadiusClientService(persistenceEntryManager,bcService.getRadiusClientConfigDN());
         ServiceLocator.registerService(KnownService.RadiusClient,rcService);
         return true; 
     }
@@ -128,7 +132,7 @@ public class ServerEntry {
     private static final boolean registerServerConfigService() {
 
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
-        ServerConfigService scService = new ServerConfigService(ldapEntryManager,bcService.getRadiusConfigDN());
+        ServerConfigService scService = new ServerConfigService(persistenceEntryManager,bcService.getRadiusConfigDN());
         ServiceLocator.registerService(KnownService.ServerConfig,scService);
         return true;
     }
@@ -147,10 +151,18 @@ public class ServerEntry {
         return ret;
     }
 
-    private static final LdapEntryManager createLdapEntryManager() {
+    private static final PersistenceEntryManager createPersistenceEntryManager() {
 
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
-        return LdapEntryManagerFactory.createLdapEntryManager(bcService.getLdapConnectionParams());
+        Properties connParameters = bcService.getPersistenceConnectionParams();
+
+        if (bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_LDAP) {
+            return PersistenceEntryManagerFactory.createLdapPersistenceEntryManager(connParameters);
+        }else if(bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE) {
+            return PersistenceEntryManagerFactory.createCouchbasePersistenceEntryManager(connParameters);
+        }
+
+        return null;
     }
 
 
