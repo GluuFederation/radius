@@ -10,10 +10,29 @@ import org.gluu.radius.util.EncDecUtil;
 
 public final class GluuRadiusServer implements RadiusEventListener {
 
-    public class RadiusClientComparator implements Comparator<RadiusClient> {
+    public static class RadiusClientComparator implements Comparator<RadiusClient> {
 
         @Override
         public int compare(RadiusClient first, RadiusClient second) {
+
+            if(first == null && second == null)
+                return 0;
+
+            if(first== null && second !=null)
+                return -1;
+            
+            if(first !=null && second == null)
+                return 1;
+            
+            if(first.getPriority() == null && second.getPriority() == null)
+                return 0;
+            
+            if(first.getPriority() == null && second.getPriority() != null)
+                return -1;
+            
+            if(first.getPriority() != null && second.getPriority() != null)
+                return 1;
+            
             if(first.getPriority() < second.getPriority())
                 return -1;
             else if(first.getPriority() > second.getPriority())
