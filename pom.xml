@@ -13,8 +13,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <oxcore.version>4.0.0-SNAPSHOT</oxcore.version>
-    <oxauth.version>4.0.0-SNAPSHOT</oxauth.version>
+    <gluu.components.version>4.0.0-SNAPSHOT</gluu.components.version>
   </properties>
 
   <repositories>
