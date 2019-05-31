@@ -30,41 +30,41 @@
     <dependency>
       <groupId>org.gluu</groupId>
       <artifactId>oxcore-radius</artifactId>
-      <version>${oxcore.version}</version>
+      <version>${gluu.components.version}</version>
     </dependency>
 
     <!-- oxcore-persistence-ldap -->
     <dependency>
       <groupId>org.gluu</groupId>
       <artifactId>oxcore-persistence-ldap</artifactId>
-      <version>${oxcore.version}</version>
+      <version>${gluu.components.version}</version>
     </dependency>
 
     <!-- oxcore-persistence-couchbase -->
     <dependency>
       <groupId>org.gluu</groupId>
       <artifactId>oxcore-persistence-couchbase</artifactId>
-      <version>${oxcore.version}</version>
+      <version>${gluu.components.version}</version>
     </dependency>
 
     <!-- oxcore-persistence-annotations -->
     <dependency>
       <groupId>org.gluu</groupId>
       <artifactId>oxcore-persistence-annotation</artifactId>
-      <version>${oxcore.version}</version>
+      <version>${gluu.components.version}</version>
     </dependency>
 
     <!-- oxauth client -->
     <dependency>
       <groupId>org.gluu</groupId>
       <artifactId>oxauth-client</artifactId>
-      <version>${oxauth.version}</version>
+      <version>${gluu.components.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.gluu</groupId>
       <artifactId>supergluu-auth-client</artifactId>
-      <version>1.1-SNAPSHOT</version>
+      <version>${gluu.components.version}</version>
     </dependency>
 
     <dependency>
@@ -105,37 +105,38 @@
         </configuration>
       </plugin>
 
-      <!-- jar plugin -->
+      <!-- maven-jar-plugin -->
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
+        <version>3.1.2</version>
         <configuration>
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>libs/</classpathPrefix>
               <mainClass>org.gluu.radius.ServerEntry</mainClass>
+              <addBuildEnvironmentEntries>true</addBuildEnvironmentEntries>
             </manifest>
           </archive>
         </configuration>
       </plugin>
 
-      <!-- dependency plugin -->
+      <!-- maven-assembly-plugin -->
       <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
         <version>3.1.1</version>
         <executions>
           <execution>
-            <id>copy-dependencies</id>
-            <phase>prepare-package</phase>
+            <id>make-assembly-dist</id>
+            <phase>package</phase>
             <goals>
-              <goal>copy-dependencies</goal>
+              <goal>single</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/libs</outputDirectory>
-              <overWriteReleases>true</overWriteReleases>
-              <!-- we don't need log4j 1.2.x in the output -->
-               <excludeArtifactIds>log4j</excludeArtifactIds>
+              <descriptors>
+                  <descriptor>src/assembly/src.xml</descriptor>
+              </descriptors>
             </configuration>
           </execution>
         </executions>
