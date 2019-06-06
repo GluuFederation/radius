@@ -1,9 +1,13 @@
 package org.gluu.radius;
 
+import java.util.List;
+
 import org.gluu.radius.exception.ServerFactoryException;
 import org.gluu.radius.exception.ServiceException;
+import org.gluu.radius.model.AuthScope;
 import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.ServiceLocator;
+import org.apache.log4j.Logger;
 import org.gluu.radius.KnownService;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.server.filter.SuperGluuAccessRequestFilter;
@@ -73,14 +77,26 @@ public class ServerFactory {
         }
     }
 
+    private static final List<AuthScope> getAuthScopes(ServerConfiguration serverConfig) {
+
+        try {
+            ServerConfigService scService = ServiceLocator.getService(KnownService.ServerConfig);
+            return scService.getScopes(serverConfig);
+        }catch(ServiceException e) {
+            throw new ServerFactoryException("Error getting server configuration",e);
+        }
+    }
+
     private static final SuperGluuAccessRequestFilterConfig getSuperGluuAccessRequestFilterConfig() {
 
         ServerConfiguration serverConfig = getServerConfiguration();
+        List<AuthScope> scopes = getAuthScopes(serverConfig);
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
         OpenIdConfigurationService openIdConfigService = ServiceLocator.getService(KnownService.OpenIdConfig);
         return new SuperGluuAccessRequestFilterConfig(
             bcService,
             serverConfig,
+            scopes,
             openIdConfigService
         );
     }

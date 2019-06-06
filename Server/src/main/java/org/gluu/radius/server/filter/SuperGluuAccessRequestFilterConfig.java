@@ -3,6 +3,7 @@ package org.gluu.radius.server.filter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.gluu.radius.model.AuthScope;
 import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.service.BootstrapConfigService;
 import org.gluu.radius.service.OpenIdConfigurationService;
@@ -17,13 +18,15 @@ public class SuperGluuAccessRequestFilterConfig {
     private final BootstrapConfigService bcService;
     private final OpenIdConfigurationService openIdConfigService;
     private ServerConfiguration serverConfig;
+    private List<AuthScope> scopes;
     
-    public SuperGluuAccessRequestFilterConfig(final BootstrapConfigService bcService, 
-        ServerConfiguration serverConfig, OpenIdConfigurationService openIdConfigService) {
+    public SuperGluuAccessRequestFilterConfig(final BootstrapConfigService bcService, ServerConfiguration serverConfig, 
+        List<AuthScope> scopes,OpenIdConfigurationService openIdConfigService) {
 
         this.bcService = bcService;
         this.serverConfig = serverConfig;
         this.openIdConfigService = openIdConfigService;
+        this.scopes = scopes;
     }
 
     public String getOpenidUsername() {
@@ -52,14 +55,14 @@ public class SuperGluuAccessRequestFilterConfig {
 
     public List<String> getScopes() {
         
-        List<String> scopes = new ArrayList<String>();
-        for(ServerConfiguration.AuthScope authScope: serverConfig.getScopes()) {
-            if(authScope.getName() != null)
-                scopes.add(authScope.getName());
-            else if(authScope.getId() != null)
-                scopes.add(authScope.getId());
-        }    
-        return scopes;
+       List<String> ret = new ArrayList<String>();
+       for(AuthScope scope: scopes) {
+           if(scope.getName() != null)
+                ret.add(scope.getName());
+           else if(scope.getId() != null)
+                ret.add(scope.getId());
+       }
+       return ret;
     }
 
     public String getJwtKeyStoreFile() {

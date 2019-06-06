@@ -1,6 +1,6 @@
 package org.gluu.radius.service;
 
-
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -9,6 +9,7 @@ import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.exception.EntryPersistenceException;
 import org.gluu.persist.model.SearchScope;
 import org.gluu.radius.exception.ServiceException;
+import org.gluu.radius.model.AuthScope;
 import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.search.filter.Filter;
 
@@ -29,46 +30,25 @@ public class ServerConfigService {
     public ServerConfiguration getServerConfiguration() {
 
         try {
-            Filter searchFilter = createServerConfigurationSearchFilter();
-            String [] attributes = null;
-            List<ServerConfiguration> serverConfigs = persistenceEntryManager.findEntries(configEntryDn,ServerConfiguration.class,
-                searchFilter,SearchScope.BASE,attributes,0,1,1);
-            if(serverConfigs.size() == 0)
-                return null;
-            ServerConfiguration serverConfig = serverConfigs.get(0);
-            if(serverConfig.getScopesDn() == null)
-                return serverConfig;
-            
-            for(String scopeDn : serverConfig.getScopesDn()) {
-                ServerConfiguration.AuthScope authScope = getScope(scopeDn);
-                if(authScope != null)
-                    serverConfig.addScope(authScope);
-            }
-            return serverConfig;
-    
+            return persistenceEntryManager.find(ServerConfiguration.class,configEntryDn);
         }catch(EntryPersistenceException e) {
             throw new ServiceException("Failed fetching server configuration",e);
         }
     }
 
-    private final ServerConfiguration.AuthScope getScope(String scopeDn) {
+    public List<AuthScope> getScopes(ServerConfiguration config) {
 
+        List<AuthScope> ret = new ArrayList<AuthScope>();
         try {
-           String [] attributes = null;
-           List<ServerConfiguration.AuthScope> foundScopes = persistenceEntryManager.findEntries(scopeDn,
-           ServerConfiguration.AuthScope.class,null,SearchScope.BASE,attributes,0,1,1);
-           if (foundScopes.isEmpty())
-                return null;
-            else
-                return foundScopes.get(0);
+            for(String scopeDn : config.getScopes()) {
+                AuthScope scope = persistenceEntryManager.find(AuthScope.class,scopeDn);
+                if(scope != null)
+                    ret.add(scope);
+            }
         }catch(EntryPersistenceException e) {
-            throw new ServiceException("Failed fetching server configuration",e);
+            throw new ServiceException("Failed fetch associated scopes for server configuration",e);
         }
-    }
-
-    private final Filter createServerConfigurationSearchFilter() {
-
-        return null;
+        return ret;
     }
 
 }

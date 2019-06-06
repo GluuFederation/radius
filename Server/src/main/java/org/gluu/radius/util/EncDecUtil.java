@@ -43,10 +43,10 @@ public class EncDecUtil {
     public static final String encode(String data,String salt) {
 
         if(data == null )
-            throw new GluuRadiusException("data cannot be null");
+            throw new GluuRadiusException("Plaintext data cannot be null");
         
         if(salt == null)
-            throw new GluuRadiusException("salt cannot be null");
+            throw new GluuRadiusException("encryption key cannot be null");
         
         try {
             SecretKeySpec keyspec = generateTripleDesSecretKeySpec(salt);
