@@ -154,13 +154,15 @@ public class ServerEntry {
     private static final PersistenceEntryManager createPersistenceEntryManager() {
 
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
-        Properties connParameters = bcService.getPersistenceConnectionParams();
 
         if (bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_LDAP) {
-            return PersistenceEntryManagerFactory.createLdapPersistenceEntryManager(connParameters);
+            Properties props = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_LDAP);
+            return PersistenceEntryManagerFactory.createLdapPersistenceEntryManager(props);
         }else if(bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE) {
-            return PersistenceEntryManagerFactory.createCouchbasePersistenceEntryManager(connParameters);
-        }
+            Properties props = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE);
+            return PersistenceEntryManagerFactory.createCouchbasePersistenceEntryManager(props);
+        }else
+            log.error("unsupported persistence backend");
 
         return null;
     }

@@ -1,8 +1,13 @@
 package org.gluu.radius.service;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+
+import javax.lang.model.util.ElementScanner6;
 
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.util.EncDecUtil;
@@ -14,11 +19,11 @@ public class BootstrapConfigService  {
     private enum BootstrapConfigKeys {
         SaltFile("radius.config.saltfile"),
         PersistenceConfigFile("radius.persist.config"),
-        PersistenceBackend("radius.persist.backend"),
+        PersistenceType("persistence.type"),
         JwtKeyStoreFile("radius.jwt.keyStoreFile"),
         JwtKeyStorePin("radius.jwt.keyStorePin"),
         JwtAuthKeyId("radius.jwt.auth.keyId"),
-        ConfigDN("radius.config_DN"),
+        ConfigDN("oxradius_ConfigurationEntryDN"),
         ClientsDN("radius.clients_DN"),
         JwtAuthSignatureAlgorithm("radius.jwt.auth.signAlgorithm");
 
@@ -38,11 +43,13 @@ public class BootstrapConfigService  {
     private static final String encodeSaltKey = "encodeSalt";
     private static final String bindPasswordKey = "bindPassword";
     private static final String authPasswordKey = "auth.userPassword";
-    private static final String trustStorePinKey = "ssl.trustStorePin";
+    private static final String trustStorePinKey_Ldap = "ssl.trustStorePin";
+    private static final String trustStorePinKey_Couchbase = "ssl.trustStore.pin";
     
     private String salt;
     private Properties persistenceConfig;
     private PersistenceBackendType persistenceBackend;
+    private Map<PersistenceBackendType,Properties> persistenceBackendConfig;
     private String jwtKeyStoreFile;
     private String jwtKeyStorePin;
     private String jwtAuthKeyId;
@@ -56,31 +63,66 @@ public class BootstrapConfigService  {
         String saltFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.SaltFile.getKeyName());
 
         if(saltFile == null)
-            throw new ServiceException("Salt file not found in radius configuration file");
+            throw new ServiceException("Salt file not found");
 
         this.salt = loadEncodeSalt(saltFile);
+        this.persistenceBackendConfig = new HashMap<PersistenceBackendType,Properties>();
 
-        String backend = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceBackend.getKeyName());
-        if (backend.equalsIgnoreCase("couchbase")) {
-            this.persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_LDAP;
-        }else if(backend.equalsIgnoreCase("ldap")) {
-            this.persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_LDAP;
+        String persistFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceConfigFile.getKeyName());
+        File persistFileObj = new File(persistFile);
+        if(persistFileObj.exists() == false)
+            throw new ServiceException("Persistence configuration file not found");
+        
+        String persistDir = persistFileObj.getParent();
+        if(persistDir == null)
+            throw new ServiceException("Could not determine persistence config directory");
+        
+        persistenceConfig = loadPropertiesFromFile(persistFile); 
+        String backendType = persistenceConfig.getProperty(BootstrapConfigKeys.PersistenceType.getKeyName());
+        if(backendType == null)
+            throw new ServiceException("Backend type not found");
+        
+        if(backendType.equalsIgnoreCase("opendj") || backendType.equalsIgnoreCase("ldap")) {
+            String ldapConfigFile = String.format("%s/gluu-ldap.properties",persistDir);
+            if(new File(ldapConfigFile).exists() == false)
+                throw new ServiceException("Ldap configuration file not found");
+            Properties props = loadPropertiesFromFile(ldapConfigFile);
+            persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_LDAP;
+            String bindPassword = props.getProperty(bindPasswordKey);
+            String trustStorePin = props.getProperty(trustStorePinKey_Ldap);
+            bindPassword = EncDecUtil.decode(bindPassword, salt);
+            trustStorePin = EncDecUtil.decode(trustStorePin,salt);
+            props.setProperty(bindPasswordKey,bindPassword);
+            props.setProperty(trustStorePinKey_Ldap,trustStorePin);
+            persistenceBackendConfig.put(persistenceBackend,props);
+        }else if(backendType.equalsIgnoreCase("couchbase")) {
+            String couchbaseConfigFile = String.format("%s/gluu-couchbase.properties",persistDir);
+            if(new File(couchbaseConfigFile).exists() == false)
+                throw new ServiceException("Couchbase configuration file not found");
+            Properties props = loadPropertiesFromFile(couchbaseConfigFile);
+            persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE;
+            String authPassword = props.getProperty(authPasswordKey);
+            String trustStorePin = props.getProperty(trustStorePinKey_Couchbase);
+            authPassword = EncDecUtil.decode(authPassword,salt);
+            trustStorePin = EncDecUtil.decode(trustStorePin,salt);
+            props.setProperty(authPasswordKey,authPassword);
+            props.setProperty(trustStorePinKey_Couchbase,trustStorePin);
+            persistenceBackendConfig.put(persistenceBackend,props);
         }else
-            throw new ServiceException("Unknown persistence backend specified");
-
-        String persistenceConfigFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceConfigFile.getKeyName()); 
-
-        this.persistenceConfig = loadPropertiesFromFile(persistenceConfigFile);
-
+            throw new ServiceException(String.format("Backend type %s not supported",backendType));
+        
+        this.jwtKeyStorePin = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStorePin.getKeyName());
         this.jwtKeyStoreFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStoreFile.getKeyName());
-        this.jwtKeyStorePin  = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStorePin.getKeyName());
-
-        this.jwtAuthKeyId = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthKeyId.getKeyName());
         String signalgo = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthSignatureAlgorithm.getKeyName());
         this.jwtAuthSignAlgo = SignatureAlgorithm.fromString(signalgo);
+        this.jwtAuthKeyId = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthKeyId.getKeyName());
 
-        this.configDN = oxRadiusConfig.getProperty(BootstrapConfigKeys.ConfigDN.getKeyName());
+        this.configDN = persistenceConfig.getProperty(BootstrapConfigKeys.ConfigDN.getKeyName());
+        if(this.configDN == null) 
+            throw new ServiceException("Server configuration base DN  is missing from configuration.");
         this.clientsDN = oxRadiusConfig.getProperty(BootstrapConfigKeys.ClientsDN.getKeyName());
+        if(this.clientsDN == null)
+            throw new ServiceException("Radius clients base DN is missing from configuration.");   
     }
 
     public final String getEncodeSalt() {
@@ -93,23 +135,13 @@ public class BootstrapConfigService  {
         return this.persistenceBackend;
     }
 
-    public final Properties getPersistenceConnectionParams() {
+    public final Properties getBackendConfiguration(PersistenceBackendType backendType) {
 
-        Properties props =  (Properties) persistenceConfig.clone();
-
-        if(persistenceBackend == PersistenceBackendType.PERSISTENCE_BACKEND_LDAP) {
-            props.setProperty(bindPasswordKey,
-                EncDecUtil.decode(props.getProperty(bindPasswordKey),salt));
-            
-        }else if (persistenceBackend == PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE) {
-            props.setProperty(authPasswordKey,
-                EncDecUtil.decode(props.getProperty(authPasswordKey),salt));
-        }
-        if(props.getProperty(trustStorePinKey)!=null && !props.getProperty(trustStorePinKey).isEmpty()) {
-            props.setProperty(trustStorePinKey,
-                EncDecUtil.decode(props.getProperty(trustStorePinKey),salt));
-        }
-        return props;
+        Properties ret = persistenceBackendConfig.get(backendType);
+        if(ret != null)
+            return (Properties) ret.clone();
+        
+        return null;
     }
 
     public final String getRadiusConfigDN() {
