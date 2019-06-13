@@ -47,6 +47,13 @@
       <version>${gluu.components.version}</version>
     </dependency>
 
+    <!-- oxcore-persistence-hybrid -->
+    <dependency>
+      <groupId>org.gluu</groupId>
+      <artifactId>oxcore-persistence-hybrid</artifactId>
+      <version>${gluu.components.version}</version>
+    </dependency>
+
     <!-- oxcore-persistence-annotations -->
     <dependency>
       <groupId>org.gluu</groupId>
