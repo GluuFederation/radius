@@ -161,6 +161,11 @@ public class ServerEntry {
         }else if(bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE) {
             Properties props = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE);
             return PersistenceEntryManagerFactory.createCouchbasePersistenceEntryManager(props);
+        }else if(bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_HYBRID) {
+            Properties hybridprops = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_HYBRID);
+            Properties ldap_props = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_LDAP);
+            Properties couchbaseprops = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE);
+            return PersistenceEntryManagerFactory.createHybridPersistenceEntryManager(hybridprops,ldap_props,couchbaseprops);
         }else
             log.error("unsupported persistence backend");
 

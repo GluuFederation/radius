@@ -1,12 +1,17 @@
 package org.gluu.radius.persist;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
-import org.gluu.persist.couchbase.impl.CouchbaseEntryManager;
 import org.gluu.persist.couchbase.impl.CouchbaseEntryManagerFactory;
 import org.gluu.persist.exception.operation.ConfigurationException;
-import org.gluu.persist.ldap.impl.LdapEntryManager;
+import org.gluu.persist.hybrid.impl.HybridEntryManager;
+import org.gluu.persist.hybrid.impl.HybridEntryManagerFactory;
+import org.gluu.persist.hybrid.impl.HybridPersistenceOperationService;
 import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
+import org.gluu.persist.operation.PersistenceOperationService;
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.radius.exception.GenericPersistenceException;
 
@@ -38,6 +43,25 @@ public class PersistenceEntryManagerFactory {
                 throw new GenericPersistenceException("Could not create persistence entry manager");
             
             return ret;
+        }catch(ConfigurationException e) {
+            throw new GenericPersistenceException(e.getMessage(),e);
+        }
+    }
+
+    public static final PersistenceEntryManager createHybridPersistenceEntryManager(Properties hybridprops,
+        Properties ldap_props, Properties couchbaseprops) {
+        try {
+            PersistenceEntryManager ldapEntryManager = createLdapPersistenceEntryManager(ldap_props);
+            PersistenceEntryManager couchbaseEntryManager = createCouchbasePersistenceEntryManager(couchbaseprops);
+            HashMap<String,PersistenceEntryManager> managers = new HashMap<String,PersistenceEntryManager>();
+            managers.put(LdapEntryManagerFactory.PERSISTANCE_TYPE,ldapEntryManager);
+            managers.put(CouchbaseEntryManagerFactory.PERSISTANCE_TYPE,couchbaseEntryManager);
+            Properties mapping = createConnectionProperties(hybridprops,HybridEntryManagerFactory.PERSISTANCE_TYPE);
+            List<PersistenceOperationService> persistenceOperationServices = new ArrayList<PersistenceOperationService>();
+            persistenceOperationServices.add(ldapEntryManager.getOperationService());
+            persistenceOperationServices.add(couchbaseEntryManager.getOperationService());
+            HybridPersistenceOperationService opservice = new HybridPersistenceOperationService(persistenceOperationServices);
+            return new HybridEntryManager(mapping,managers,opservice);
         }catch(ConfigurationException e) {
             throw new GenericPersistenceException(e.getMessage(),e);
         }

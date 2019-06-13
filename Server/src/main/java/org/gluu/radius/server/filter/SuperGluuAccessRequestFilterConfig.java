@@ -72,7 +72,7 @@ public class SuperGluuAccessRequestFilterConfig {
 
     public String getJwtKeyStorePin() {
 
-        return EncDecUtil.decode(bcService.getJwtKeyStorePin(),bcService.getEncodeSalt());
+        return bcService.getJwtKeyStorePin();
     }
 
     public String getJwtAuthKeyId() {
