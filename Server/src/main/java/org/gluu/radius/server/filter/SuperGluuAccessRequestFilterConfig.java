@@ -8,6 +8,7 @@ import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.service.BootstrapConfigService;
 import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.util.EncDecUtil;
+import org.json.JSONObject;
 import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class SuperGluuAccessRequestFilterConfig {
@@ -19,14 +20,16 @@ public class SuperGluuAccessRequestFilterConfig {
     private final OpenIdConfigurationService openIdConfigService;
     private ServerConfiguration serverConfig;
     private List<AuthScope> scopes;
+    private JSONObject serverKeyset;
     
     public SuperGluuAccessRequestFilterConfig(final BootstrapConfigService bcService, ServerConfiguration serverConfig, 
-        List<AuthScope> scopes,OpenIdConfigurationService openIdConfigService) {
+        List<AuthScope> scopes,OpenIdConfigurationService openIdConfigService,JSONObject serverKeyset) {
 
         this.bcService = bcService;
         this.serverConfig = serverConfig;
         this.openIdConfigService = openIdConfigService;
         this.scopes = scopes;
+        this.serverKeyset = serverKeyset;
     }
 
     public String getOpenidUsername() {
@@ -108,5 +111,10 @@ public class SuperGluuAccessRequestFilterConfig {
     public String getSessionStatusUrl() {
 
         return this.serverConfig.getOpenidBaseUrl() + SESSION_STATUS_URI;
+    }
+
+    public JSONObject getServerKeyset() {
+
+        return this.serverKeyset;
     }
 }

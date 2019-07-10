@@ -66,8 +66,9 @@ public class BootstrapConfigService  {
         if(saltFile == null)
             throw new ServiceException("Salt file not found");
         this.salt = loadEncodeSalt(saltFile);
+        System.out.println("Salt: " + this.salt);
         this.persistenceBackendConfig = new HashMap<PersistenceBackendType,Properties>();
-        String persistFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.SaltFile.getKeyName());
+        String persistFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceConfigFile.getKeyName());
         File persistFileObj = new File(persistFile);
         if(persistFileObj.exists() == false)
             throw new ServiceException("Persistence configuration file not found");
@@ -76,6 +77,7 @@ public class BootstrapConfigService  {
             throw new ServiceException("Could not determine db backend type");
         
         persistenceConfig = loadPropertiesFromFile(persistFile);
+        System.out.println("Persistence configuration size: "+ persistenceConfig.size());
         String backendtype = persistenceConfig.getProperty(BootstrapConfigKeys.PersistenceType.getKeyName());
         if(backendtype == null)
             throw new ServiceException("Backend type not found");
