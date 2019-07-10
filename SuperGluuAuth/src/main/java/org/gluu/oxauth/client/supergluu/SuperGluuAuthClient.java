@@ -131,6 +131,8 @@ public class SuperGluuAuthClient {
                 log.debug("SuperGluu resend push notification failed. Response: " + response.getEntity());
             else
                 log.debug("SuperGluu resend push notification failed. No response");
+            
+            return false;
         }
         
         return verifyIdTokenSignature(response.getIdToken());
