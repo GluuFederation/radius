@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.gluu.radius.exception.GluuRadiusException;
 import org.gluu.radius.server.AccessRequestContext;
 import org.gluu.radius.server.AccessRequestFilter;
+import org.json.JSONObject;
 import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 import org.gluu.oxauth.client.supergluu.SuperGluuAuthClient;
 import org.gluu.oxauth.client.supergluu.SuperGluuAuthClientConfig;
@@ -21,6 +22,7 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
     private SuperGluuAuthClientConfig authClientConfig;
     private IHttpClientFactory httpClientFactory;
     private ICryptoProviderFactory cryptoProviderFactory;
+    private JSONObject serverKeyset;
     public SuperGluuAccessRequestFilter(SuperGluuAccessRequestFilterConfig filterConfig) {
 
         this.httpClientFactory = new PoolingConnectionHttpClientFactory();
@@ -48,6 +50,7 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
             this.authClientConfig.addScope(authScope); 
         }
         this.authenticationTimeout = filterConfig.getAuthenticationTimeout();
+        this.serverKeyset = filterConfig.getServerKeyset();
     }
 
 
@@ -55,7 +58,7 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
     public boolean processAccessRequest(AccessRequestContext arContext) {
 
         try {
-            SuperGluuAuthClient authClient = new SuperGluuAuthClient(authClientConfig, httpClientFactory,cryptoProviderFactory);
+            SuperGluuAuthClient authClient = new SuperGluuAuthClient(authClientConfig, httpClientFactory,cryptoProviderFactory,serverKeyset);
             String ipaddress = arContext.getClientIpAddress();
             String username  = arContext.getUsername();
             String password  = arContext.getPassword();

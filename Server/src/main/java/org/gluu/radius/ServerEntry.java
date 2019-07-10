@@ -5,6 +5,8 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.gluu.oxauth.client.JwkClient;
+import org.gluu.oxauth.client.JwkResponse;
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.radius.exception.GenericPersistenceException;
 import org.gluu.radius.exception.ServiceException;
@@ -18,12 +20,14 @@ import org.gluu.radius.service.BootstrapConfigService;
 import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.ServerConfigService;
+import org.json.JSONObject;
 
 
 public class ServerEntry {
 
     private static final Logger log = Logger.getLogger(ServerEntry.class);
     private static PersistenceEntryManager persistenceEntryManager = null;
+    private static JSONObject serverKeyset = null;
 
     public static void main(String[] args) {
 
@@ -80,6 +84,13 @@ public class ServerEntry {
         log.info("Registering OpenIdConfigurationService ...");
         if(!registerOpenIdConfigurationService()) {
             log.error("OpenIdConfigurationService registration failed. Exiting ... ");
+            System.exit(-1);
+        }
+        log.info("done");
+
+        log.info("Downloading JWK Keyset from server ... ");
+        if(!downloadJwksFromServer()) {
+            log.error("Downloading keyset from server failed. Exiting ...");
             System.exit(-1);
         }
         log.info("done");
@@ -151,6 +162,25 @@ public class ServerEntry {
         return ret;
     }
 
+    private static final boolean downloadJwksFromServer() {
+
+        try {
+            OpenIdConfigurationService openIdConfigService = ServiceLocator.getService(KnownService.OpenIdConfig);
+            JwkClient client = new JwkClient(openIdConfigService.getJwksUri());
+            JwkResponse response =  client.exec();
+            if(response == null || (response!=null && response.getStatus()!=200)) {
+                log.error("Jwks download failed");
+                return false;
+            }else {
+                serverKeyset = response.getJwks().toJSONObject();
+                return true;
+            }
+        }catch(ServiceException e) {
+            log.error("Jwks Download Failed",e);
+            return false;
+        }
+    }
+
     private static final PersistenceEntryManager createPersistenceEntryManager() {
 
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
@@ -177,6 +207,7 @@ public class ServerEntry {
 
         boolean ret = false;
         try {
+            ServerFactory.useServerKeyset(serverKeyset);
             GluuRadiusServer serverInstance = ServerFactory.createServer();
             serverInstance.run();
             registerServerShutdownHook(serverInstance);

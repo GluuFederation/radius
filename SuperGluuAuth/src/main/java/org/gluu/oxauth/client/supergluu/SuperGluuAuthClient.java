@@ -9,6 +9,7 @@ import org.gluu.oxauth.client.supergluu.impl.IHttpClientFactory;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusClient;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusResponse;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
+import org.json.JSONObject;
 import org.gluu.oxauth.client.TokenClient;
 import org.gluu.oxauth.client.TokenRequest;
 import org.gluu.oxauth.client.TokenResponse;
@@ -25,11 +26,9 @@ public class SuperGluuAuthClient {
     private class AuthenticationContext {
 
         private String sessionId;
-        private String idToken;
-
+    
         public AuthenticationContext() {
             this.sessionId = "";
-            this.idToken = "";
         }
 
         public String getSessionId() {
@@ -40,15 +39,6 @@ public class SuperGluuAuthClient {
         public void setSessionId(String sessionId) {
 
             this.sessionId = sessionId;
-        }
-
-        public String getIdToken() {
-
-            return this.idToken;
-        }
-
-        public void setIdToken(String idToken) {
-            this.idToken = idToken;
         }
     }
 
@@ -69,6 +59,7 @@ public class SuperGluuAuthClient {
     private AbstractCryptoProvider cryptoProvider;
     private TokenClient tokenClient;
     private SessionStatusClient sessionStatusClient;
+    private JSONObject serverKeyset;
 
     public SuperGluuAuthClient(SuperGluuAuthClientConfig config, IHttpClientFactory httpClientFactory) {
         authContext = new AuthenticationContext();
@@ -81,11 +72,12 @@ public class SuperGluuAuthClient {
     }
 
     public SuperGluuAuthClient(SuperGluuAuthClientConfig config, 
-        IHttpClientFactory httpClientFactory, ICryptoProviderFactory cryptoProviderFactory) {
+        IHttpClientFactory httpClientFactory, ICryptoProviderFactory cryptoProviderFactory,JSONObject serverKeyset) {
         
         authContext = new AuthenticationContext();
         this.config = config;
         cryptoProvider = cryptoProviderFactory.newCryptoProvider();
+        this.serverKeyset = serverKeyset;
         tokenClient = new TokenClient(config.getTokenEndpointUrl());
         tokenClient.setExecutor(createExecutor(httpClientFactory));
         sessionStatusClient = new SessionStatusClient(config.getSessionStatusUrl());
@@ -121,7 +113,7 @@ public class SuperGluuAuthClient {
             log.debug("SuperGluu initial auth failed. No id_token returned. " + response.getEntity());
             return false;
         }
-        return parseCurrentIdToken(idtoken);
+        return extractSessionIdFromIdToken(idtoken);
     }
 
     public Boolean resendPushNotification(String username, String password) {
@@ -141,7 +133,7 @@ public class SuperGluuAuthClient {
                 log.debug("SuperGluu resend push notification failed. No response");
         }
         
-        return true;
+        return verifyIdTokenSignature(response.getIdToken());
     }
 
     public Boolean verifyAuthentication(String username,String password) {
@@ -158,7 +150,7 @@ public class SuperGluuAuthClient {
             return false;
         }
 
-        return true;
+        return verifyIdTokenSignature(response.getIdToken());
     }
 
     public SuperGluuAuthStatus checkAuthenticationStatus() {
@@ -213,6 +205,9 @@ public class SuperGluuAuthClient {
 
         TokenRequest request = new TokenRequest(GrantType.RESOURCE_OWNER_PASSWORD_CREDENTIALS);
 
+        if(config.hasScopes())
+            request.setScope(config.getScopesAsString());
+        
         if(config.hasAcrValue())
             request.addCustomParameter(ACR_VALUES_PARAM_NAME,config.getAcrValue());
         
@@ -232,6 +227,9 @@ public class SuperGluuAuthClient {
 
         TokenRequest request = new TokenRequest(GrantType.RESOURCE_OWNER_PASSWORD_CREDENTIALS);
 
+        if(config.hasScopes())
+            request.setScope(config.getScopesAsString());
+        
         if(config.hasAcrValue())
             request.addCustomParameter(ACR_VALUES_PARAM_NAME,config.getAcrValue());
         
@@ -268,22 +266,49 @@ public class SuperGluuAuthClient {
         }
     }
 
-    private boolean parseCurrentIdToken(String idToken) {
+    private boolean verifyJwtSignature(Jwt jwt) {
+        try {
+            String keyId = jwt.getHeader().getKeyId();
+            return cryptoProvider.verifySignature(
+                jwt.getSigningInput(),jwt.getEncodedSignature(), keyId,
+                serverKeyset,null,jwt.getHeader().getAlgorithm());
+        }catch(Exception e) {
+            log.debug("JWT token signature verification failed",e);
+            return false;
+        }
+    }
+
+    private boolean verifyIdTokenSignature(String idToken) {
 
         try {
             Jwt jwt = Jwt.parse(idToken);
-            if(!jwt.getClaims().hasClaim(SESSION_ID_CLAIM_NAME)) {
-                log.debug("IdToken parse failed. No session claim found");
-                return false;
-            }
-            authContext.setSessionId(jwt.getClaims().getClaimAsString(SESSION_ID_CLAIM_NAME));
-            authContext.setIdToken(idToken);
+            return verifyJwtSignature(jwt);
         }catch(InvalidJwtException e) {
-            log.debug("IdToken parse failed. "+e.getMessage(),e);
+            log.debug("Id token validation failed.",e);
             return false;
         }
+    }
 
-        return true;
+    private boolean extractSessionIdFromIdToken(String idToken) {
+
+        try {
+            Jwt jwt = Jwt.parse(idToken);
+            if(!verifyJwtSignature(jwt)) {
+                log.debug("Jwt signature verification failed during session_id extraction");
+                return false;
+            }
+
+            if(!jwt.getClaims().hasClaim(SESSION_ID_CLAIM_NAME)) {
+                log.debug("No session_id claim found in JWT token");
+                return false;
+            }
+
+            authContext.setSessionId(jwt.getClaims().getClaimAsString(SESSION_ID_CLAIM_NAME));
+            return true;
+        }catch(InvalidJwtException e) {
+            log.debug("IdToken parse failed during sesion_id extraction.",e);
+            return false;
+        }
     }
 
 }

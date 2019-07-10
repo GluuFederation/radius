@@ -2,6 +2,8 @@ package org.gluu.radius;
 
 import java.util.List;
 
+import org.json.JSONObject;
+
 import org.gluu.radius.exception.ServerFactoryException;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.AuthScope;
@@ -24,8 +26,15 @@ import org.gluu.radius.service.ServerConfigService;
 
 public class ServerFactory {
 
+    private static JSONObject serverKeyset;
+
     private ServerFactory() {
 
+    }
+
+    public static void useServerKeyset(JSONObject serverKeyset) {
+
+        ServerFactory.serverKeyset = serverKeyset;
     }
 
     public static final GluuRadiusServer createServer() {
@@ -97,7 +106,8 @@ public class ServerFactory {
             bcService,
             serverConfig,
             scopes,
-            openIdConfigService
+            openIdConfigService,
+            serverKeyset
         );
     }
 }

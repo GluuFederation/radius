@@ -13,12 +13,10 @@ public class OpenIdConfigurationService {
     private String authorizationEndpoint;
     private String registrationEndpoint;
     private String tokenEndpoint;
+    private String jwksUri;
 
     public OpenIdConfigurationService(ServerConfigService serverConfigService) {
 
-        this.authorizationEndpoint = null;
-        this.registrationEndpoint  = null;
-        this.tokenEndpoint = null;
         loadOpenIdConfiguration(serverConfigService);
     }
 
@@ -37,6 +35,11 @@ public class OpenIdConfigurationService {
         return this.tokenEndpoint;
     }
 
+    public String getJwksUri() {
+
+        return this.jwksUri;
+    }
+
     private void loadOpenIdConfiguration(ServerConfigService serverConfigService) {
 
         try {
@@ -48,6 +51,7 @@ public class OpenIdConfigurationService {
                 authorizationEndpoint = response.getAuthorizationEndpoint();
                 registrationEndpoint  = response.getRegistrationEndpoint();
                 tokenEndpoint = response.getTokenEndpoint();
+                jwksUri = response.getJwksUri();
             }
             else
                 throw new ServiceException("Could not load OpenIdConfiguration");
