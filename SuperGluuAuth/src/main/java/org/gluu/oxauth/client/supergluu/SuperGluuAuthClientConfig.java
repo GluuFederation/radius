@@ -52,7 +52,6 @@ public class SuperGluuAuthClientConfig {
         
         this.authenticationMethod = AuthenticationMethod.PRIVATE_KEY_JWT;
         this.clientId = null;
-        this.clientSecret = clientSecret;
         this.tokenEndpointUrl = null;
         this.sessionStatusUrl = null;
         this.keyId = keyId;
