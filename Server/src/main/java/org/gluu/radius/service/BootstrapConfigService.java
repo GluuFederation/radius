@@ -84,7 +84,7 @@ public class BootstrapConfigService  {
             loadLdapBackendConfiguration(persistDir);
             persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_LDAP;
         }else if(backendtype.equalsIgnoreCase("couchbase")) {
-            loadLdapBackendConfiguration(persistDir);
+            loadCouchbaseBackendConfiguration(persistDir);
             persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE;
         }else if(backendtype.equalsIgnoreCase("hybrid")) {
             loadHybridBackendConfiguration(persistDir);
