@@ -7,11 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.lang.model.util.ElementScanner6;
-
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.util.EncDecUtil;
 import org.gluu.radius.persist.PersistenceBackendType;
+import org.apache.log4j.Logger;
 import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class BootstrapConfigService  {
@@ -46,7 +45,8 @@ public class BootstrapConfigService  {
     private static final String authPasswordKey = "auth.userPassword";
     private static final String trustStorePinKey_Ldap = "ssl.trustStorePin";
     private static final String trustStorePinKey_Couchbase = "ssl.trustStore.pin";
-    
+    private static final Logger log = Logger.getLogger(BootstrapConfigService.class);
+
     private String salt;
     private Properties persistenceConfig;
     private PersistenceBackendType persistenceBackend;
@@ -66,7 +66,6 @@ public class BootstrapConfigService  {
         if(saltFile == null)
             throw new ServiceException("Salt file not found");
         this.salt = loadEncodeSalt(saltFile);
-        System.out.println("Salt: " + this.salt);
         this.persistenceBackendConfig = new HashMap<PersistenceBackendType,Properties>();
         String persistFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceConfigFile.getKeyName());
         File persistFileObj = new File(persistFile);
@@ -77,10 +76,10 @@ public class BootstrapConfigService  {
             throw new ServiceException("Could not determine db backend type");
         
         persistenceConfig = loadPropertiesFromFile(persistFile);
-        System.out.println("Persistence configuration size: "+ persistenceConfig.size());
         String backendtype = persistenceConfig.getProperty(BootstrapConfigKeys.PersistenceType.getKeyName());
         if(backendtype == null)
             throw new ServiceException("Backend type not found");
+        log.debug("Persistence backend: " + backendtype);
         if(backendtype.equalsIgnoreCase("opendj") || backendtype.equalsIgnoreCase("ldap")) {
             loadLdapBackendConfiguration(persistDir);
             persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_LDAP;
@@ -90,7 +89,8 @@ public class BootstrapConfigService  {
         }else if(backendtype.equalsIgnoreCase("hybrid")) {
             loadHybridBackendConfiguration(persistDir);
             persistenceBackend = PersistenceBackendType.PERSISTENCE_BACKEND_HYBRID;
-        }
+        }else
+            throw new ServiceException("Unknown persistence backend " + backendtype);
 
         this.jwtKeyStorePin = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyStorePin.getKeyName());
         this.jwtKeyStorePin = EncDecUtil.decode(this.jwtKeyStorePin, salt);
