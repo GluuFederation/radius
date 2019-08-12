@@ -15,14 +15,23 @@ import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class BootstrapConfigService  {
 
+    private enum AuthScheme {
+        ONE_STEP_AUTH,
+        TWO_STEP_AUTH
+    }
+
     private enum BootstrapConfigKeys {
+        ListenEnable("radius.listen.enable"),
+        AuthScheme("radius.auth.scheme"),
         SaltFile("radius.config.saltfile"),
         PersistenceConfigFile("radius.persist.config"),
         PersistenceType("persistence.type"),
         JwtKeyStoreFile("radius.jwt.keyStoreFile"),
         JwtKeyStorePin("radius.jwt.keyStorePin"),
         JwtAuthKeyId("radius.jwt.auth.keyId"),
+        JwtKeyGenInterval("radius.jwt.keygen.interval"),
         ConfigDN("oxradius_ConfigurationEntryDN"),
+        OpenIdClientsDN("radius.openid_clients_DN"),
         ClientsDN("radius.clients_DN"),
         JwtAuthSignatureAlgorithm("radius.jwt.auth.signAlgorithm"),
         DefaultHybridStorage("storage.default");
@@ -47,6 +56,8 @@ public class BootstrapConfigService  {
     private static final String trustStorePinKey_Couchbase = "ssl.trustStore.pin";
     private static final Logger log = Logger.getLogger(BootstrapConfigService.class);
 
+    private boolean listenEnabled;
+    private AuthScheme scheme;
     private String salt;
     private Properties persistenceConfig;
     private PersistenceBackendType persistenceBackend;
@@ -55,13 +66,36 @@ public class BootstrapConfigService  {
     private String jwtKeyStoreFile;
     private String jwtKeyStorePin;
     private String jwtAuthKeyId;
+    private Integer keygenInterval;
     private SignatureAlgorithm jwtAuthSignAlgo;
     private String configDN;
     private String clientsDN;
+    private String openidClientsDN;
 
     public BootstrapConfigService(String appConfigFile) { 
 
         Properties oxRadiusConfig = loadPropertiesFromFile(appConfigFile);
+
+        String listen = oxRadiusConfig.getProperty(BootstrapConfigKeys.ListenEnable.getKeyName());
+        if(listen == null)
+            throw new ServiceException("Server listening status not specified.");
+        if(listen.equalsIgnoreCase("true"))
+            listenEnabled = true;
+        else if(listen.equalsIgnoreCase("false"))
+            listenEnabled = false;
+        else 
+            throw new ServiceException("Invalid value for property radius.listen.enable.");
+        
+        String authscheme = oxRadiusConfig.getProperty(BootstrapConfigKeys.AuthScheme.getKeyName());
+        if(authscheme == null)
+            throw new ServiceException("Unspecified authentication scheme");
+        if(authscheme.equalsIgnoreCase("onestep")) {
+            scheme = AuthScheme.ONE_STEP_AUTH;
+        }else if(authscheme.equalsIgnoreCase("twostep")) {
+            scheme = AuthScheme.TWO_STEP_AUTH;
+        }else
+            throw new ServiceException("Invalid/Unknown authscheme specified in configuration."); 
+
         String saltFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.SaltFile.getKeyName());
         if(saltFile == null)
             throw new ServiceException("Salt file not found");
@@ -74,6 +108,7 @@ public class BootstrapConfigService  {
         String persistDir = persistFileObj.getParent();
         if(persistDir == null || (persistDir !=null && persistDir.isEmpty()))
             throw new ServiceException("Could not determine db backend type");
+        
         
         persistenceConfig = loadPropertiesFromFile(persistFile);
         String backendtype = persistenceConfig.getProperty(BootstrapConfigKeys.PersistenceType.getKeyName());
@@ -98,6 +133,14 @@ public class BootstrapConfigService  {
         String signalgo = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthSignatureAlgorithm.getKeyName());
         this.jwtAuthSignAlgo = SignatureAlgorithm.fromString(signalgo);
         this.jwtAuthKeyId = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthKeyId.getKeyName());
+        String krinterval = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyGenInterval.getKeyName());
+        try {
+            keygenInterval = Integer.parseInt(krinterval);
+            if(keygenInterval <= 0)
+                throw new ServiceException("Keygen interval lesser than or equal to 0.");
+        }catch(NumberFormatException e) {
+            throw new ServiceException("Invalid value for keygen interval.");
+        }
 
         this.configDN = persistenceConfig.getProperty(BootstrapConfigKeys.ConfigDN.getKeyName());
         if(this.configDN == null)
@@ -105,6 +148,9 @@ public class BootstrapConfigService  {
         this.clientsDN = oxRadiusConfig.getProperty(BootstrapConfigKeys.ClientsDN.getKeyName());
         if(this.clientsDN == null)
             throw new ServiceException("Radius clients base DN missing from configuration.");
+        this.openidClientsDN = oxRadiusConfig.getProperty(BootstrapConfigKeys.OpenIdClientsDN.getKeyName());
+        if(this.openidClientsDN == null)
+            throw new ServiceException("OpenID clients base DN missing from configuration.");
     }
 
     private void loadLdapBackendConfiguration(String persistDir) {
@@ -167,6 +213,21 @@ public class BootstrapConfigService  {
         return this.salt;
     }
 
+    public final boolean isListenEnabled() {
+
+        return this.listenEnabled;
+    }
+
+    public final boolean isOneStepAuth() {
+
+        return this.scheme == AuthScheme.ONE_STEP_AUTH;
+    }
+
+    public final boolean isTwoStepAuth() {
+        
+        return this.scheme == AuthScheme.TWO_STEP_AUTH;
+    }
+
     public PersistenceBackendType getPersistenceBackend() {
 
         return this.persistenceBackend;
@@ -189,6 +250,11 @@ public class BootstrapConfigService  {
     public final String getRadiusClientConfigDN() {
 
         return this.clientsDN;
+    }
+
+    public final String getOpenidClientsDN() {
+
+        return this.openidClientsDN;
     }
 
     public final String getJwtKeyStoreFile() {
