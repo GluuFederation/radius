@@ -56,12 +56,12 @@ public class PersistenceEntryManagerFactory {
             HashMap<String,PersistenceEntryManager> managers = new HashMap<String,PersistenceEntryManager>();
             managers.put(LdapEntryManagerFactory.PERSISTANCE_TYPE,ldapEntryManager);
             managers.put(CouchbaseEntryManagerFactory.PERSISTANCE_TYPE,couchbaseEntryManager);
-            Properties mapping = createConnectionProperties(hybridprops,HybridEntryManagerFactory.PERSISTANCE_TYPE);
+            //Properties mapping = createConnectionProperties(hybridprops,HybridEntryManagerFactory.PERSISTANCE_TYPE);
             List<PersistenceOperationService> persistenceOperationServices = new ArrayList<PersistenceOperationService>();
             persistenceOperationServices.add(ldapEntryManager.getOperationService());
             persistenceOperationServices.add(couchbaseEntryManager.getOperationService());
             HybridPersistenceOperationService opservice = new HybridPersistenceOperationService(persistenceOperationServices);
-            return new HybridEntryManager(mapping,managers,opservice);
+            return new HybridEntryManager(hybridprops,managers,opservice);
         }catch(ConfigurationException e) {
             throw new GenericPersistenceException(e.getMessage(),e);
         }
