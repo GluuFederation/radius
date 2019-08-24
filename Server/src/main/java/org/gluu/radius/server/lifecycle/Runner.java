@@ -62,13 +62,15 @@ public class Runner extends Thread {
 
     private final void performBackgroundOperations() {
 
+        CryptoService cryptoService = ServiceLocator.getService(KnownService.Crypto);
         try {
+            cryptoService.beginWriteOpts();
             BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
             long durationsincelastrun = System.currentTimeMillis() - keygenLastRun;
             long updateinterval = bcService.getKeygenInterval() * 1000;
             if(bcService.getKeygenInterval() != 0 && (durationsincelastrun >= updateinterval)) {
                 log.info("Generating cryptographic certificates");
-                currentKeyset = generateKeys();
+                currentKeyset = generateKeys(cryptoService);
                 keygenLastRun = System.currentTimeMillis();
                 log.info("Cryptographic certificate generation failed");
             }
@@ -97,13 +99,14 @@ public class Runner extends Thread {
 
         }catch(Exception e) {
             log.error("Error while performing background operations",e);
+        }finally {
+            cryptoService.endWriteOpts();
         }
     }
 
-    private final JSONWebKeySet generateKeys() throws Exception {
+    private final JSONWebKeySet generateKeys(CryptoService cryptoService) throws Exception {
 
         JSONWebKeySet keyset = null;
-        CryptoService cryptoService = ServiceLocator.getService(KnownService.Crypto);
         keyset = cryptoService.generateKeys();
         return keyset;
     }

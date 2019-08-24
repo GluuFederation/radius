@@ -3,6 +3,9 @@ package org.gluu.radius.service;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.gluu.oxauth.client.supergluu.impl.ICryptoProviderFactory;
@@ -30,6 +33,7 @@ public class CryptoService implements ICryptoProviderFactory{
     private int expiration;
     private int expiration_hours;
     private String authSigningKeyId;
+    private ReadWriteLock cryptoLock;
 
     public CryptoService(BootstrapConfigService bcService, List<Algorithm> signAlgorithms,
          int expiration, int expiration_hours) throws Exception {
@@ -47,6 +51,7 @@ public class CryptoService implements ICryptoProviderFactory{
         this.cryptoProvider = new OxAuthCryptoProvider(keyStoreFile,keyStorePin,dnName);
         SignatureAlgorithm algo = bcService.getJwtAuthSignAlgo();
         this.authSigningKeyId = cryptoProvider.getAliasByAlgorithmForDeletion(algo,"",Use.SIGNATURE);
+        this.cryptoLock = new ReentrantReadWriteLock();
     }
 
     public JSONObject getServerKeyset() {
@@ -60,13 +65,15 @@ public class CryptoService implements ICryptoProviderFactory{
 
     public AbstractCryptoProvider getCryptoProvider() {
 
-        return this.cryptoProvider;
+        synchronized(cryptoProvider) {
+            return this.cryptoProvider;
+        }
     }
 
     @Override
     public AbstractCryptoProvider newCryptoProvider() {
 
-        return this.cryptoProvider;
+        return getCryptoProvider();
     }
     
     public String getAuthSigningKeyId() {
@@ -74,27 +81,45 @@ public class CryptoService implements ICryptoProviderFactory{
         return this.authSigningKeyId;
     }
 
+    public final void beginReadOpts() {
+
+        this.cryptoLock.readLock().lock();
+    }
+
+    public final void endReadOpts() {
+
+        this.cryptoLock.readLock().unlock();
+    }
+
+    public final void beginWriteOpts() {
+
+        this.cryptoLock.writeLock().lock();
+    }
+
+    public final void endWriteOpts() {
+
+        this.cryptoLock.writeLock().unlock();
+    }
+
     public JSONWebKeySet generateKeys() throws Exception {
 
         JSONWebKeySet keyset = new JSONWebKeySet();
 
-        synchronized(cryptoProvider) {
-            Calendar calendar =  new GregorianCalendar();
-            calendar.add(Calendar.DATE,expiration);
-            calendar.add(Calendar.HOUR,expiration_hours);
+        Calendar calendar =  new GregorianCalendar();
+        calendar.add(Calendar.DATE,expiration);
+        calendar.add(Calendar.HOUR,expiration_hours);
 
-            for(Algorithm algorithm : signAlgorithms) {
-               JSONWebKey key = generateKey(calendar, algorithm,Use.SIGNATURE);
-               SignatureAlgorithm signalgo = SignatureAlgorithm.fromString(algorithm.name());
-               if(bcService.getJwtAuthSignAlgo() == signalgo) {
-                   this.authSigningKeyId = key.getKid();
-               }
-               keyset.getKeys().add(key);
-               String oldkey = cryptoProvider.getAliasByAlgorithmForDeletion(signalgo,key.getKid(),Use.SIGNATURE);
-               if(oldkey != null) {
-                   cryptoProvider.deleteKey(oldkey);
-               }
+        for(Algorithm algorithm : signAlgorithms) {
+            JSONWebKey key = generateKey(calendar, algorithm,Use.SIGNATURE);
+            SignatureAlgorithm signalgo = SignatureAlgorithm.fromString(algorithm.name());
+            if(bcService.getJwtAuthSignAlgo() == signalgo) {
+                this.authSigningKeyId = key.getKid();
+            }
 
+            keyset.getKeys().add(key);
+            String oldkey = cryptoProvider.getAliasByAlgorithmForDeletion(signalgo,key.getKid(),Use.SIGNATURE);
+            if(oldkey != null) {
+                cryptoProvider.deleteKey(oldkey);
             }
 
         }

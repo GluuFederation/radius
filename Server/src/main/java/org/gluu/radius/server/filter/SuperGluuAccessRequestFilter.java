@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.gluu.radius.exception.GluuRadiusException;
 import org.gluu.radius.server.AccessRequestContext;
 import org.gluu.radius.server.AccessRequestFilter;
+import org.gluu.radius.service.CryptoService;
 import org.json.JSONObject;
 import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 import org.gluu.oxauth.client.supergluu.SuperGluuAuthClient;
@@ -31,13 +32,19 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
     @Override
     public boolean processAccessRequest(AccessRequestContext context) {
 
-        if(filterConfig.isOneStepAuth())
-            return performOneStepAuth(context);
-        else if(filterConfig.isTwoStepAuth())
-            return performTwoStepAuth(context);
-    
+        boolean ret = false;
+        CryptoService cryptoService = filterConfig.getCryptoService();
+        try {
+            cryptoService.beginReadOpts();
+            if(filterConfig.isOneStepAuth())
+                ret = performOneStepAuth(context);
+            else if(filterConfig.isTwoStepAuth())
+                ret = performTwoStepAuth(context);
+        }finally {
+            cryptoService.endReadOpts();
+        }
         log.debug("Authentication scheme is neither one-step nor two-step");
-        return false;
+        return ret;
     }
 
     private final boolean performOneStepAuth(AccessRequestContext context) {

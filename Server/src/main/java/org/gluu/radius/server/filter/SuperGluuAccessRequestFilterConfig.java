@@ -135,5 +135,9 @@ public class SuperGluuAccessRequestFilterConfig {
         return cryptoService;
     }
 
+    public CryptoService getCryptoService() {
+
+        return this.cryptoService;
+    }
     
 }
