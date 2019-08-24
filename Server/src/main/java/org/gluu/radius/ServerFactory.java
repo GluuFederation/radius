@@ -2,14 +2,11 @@ package org.gluu.radius;
 
 import java.util.List;
 
-import org.json.JSONObject;
-
 import org.gluu.radius.exception.ServerFactoryException;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.AuthScope;
 import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.ServiceLocator;
-import org.apache.log4j.Logger;
 import org.gluu.radius.KnownService;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.server.filter.SuperGluuAccessRequestFilter;
@@ -20,21 +17,15 @@ import org.gluu.radius.server.RadiusServerAdapter;
 import org.gluu.radius.server.RunConfiguration;
 import org.gluu.radius.server.tinyradius.TinyRadiusServerAdapter;
 import org.gluu.radius.service.BootstrapConfigService;
+import org.gluu.radius.service.CryptoService;
 import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.service.ServerConfigService;
 
 public class ServerFactory {
 
-    private static JSONObject serverKeyset;
-
     private ServerFactory() {
 
-    }
-
-    public static void useServerKeyset(JSONObject serverKeyset) {
-
-        ServerFactory.serverKeyset = serverKeyset;
     }
 
     public static final GluuRadiusServer createServer() {
@@ -102,12 +93,13 @@ public class ServerFactory {
         List<AuthScope> scopes = getAuthScopes(serverConfig);
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
         OpenIdConfigurationService openIdConfigService = ServiceLocator.getService(KnownService.OpenIdConfig);
+        CryptoService cryptoService = ServiceLocator.getService(KnownService.Crypto);
         return new SuperGluuAccessRequestFilterConfig(
             bcService,
             serverConfig,
             scopes,
             openIdConfigService,
-            serverKeyset
+            cryptoService
         );
     }
 }

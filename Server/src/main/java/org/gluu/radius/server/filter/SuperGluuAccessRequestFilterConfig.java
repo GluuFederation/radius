@@ -6,9 +6,11 @@ import java.util.List;
 import org.gluu.radius.model.AuthScope;
 import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.service.BootstrapConfigService;
+import org.gluu.radius.service.CryptoService;
 import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.util.EncDecUtil;
 import org.json.JSONObject;
+import org.gluu.oxauth.client.supergluu.impl.ICryptoProviderFactory;
 import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 
 public class SuperGluuAccessRequestFilterConfig {
@@ -20,16 +22,16 @@ public class SuperGluuAccessRequestFilterConfig {
     private final OpenIdConfigurationService openIdConfigService;
     private ServerConfiguration serverConfig;
     private List<AuthScope> scopes;
-    private JSONObject serverKeyset;
+    private CryptoService cryptoService;
     
     public SuperGluuAccessRequestFilterConfig(final BootstrapConfigService bcService, ServerConfiguration serverConfig, 
-        List<AuthScope> scopes,OpenIdConfigurationService openIdConfigService,JSONObject serverKeyset) {
+        List<AuthScope> scopes,OpenIdConfigurationService openIdConfigService,CryptoService cryptoService) {
 
         this.bcService = bcService;
         this.serverConfig = serverConfig;
         this.openIdConfigService = openIdConfigService;
         this.scopes = scopes;
-        this.serverKeyset = serverKeyset;
+        this.cryptoService = cryptoService;
     }
 
     public String getOpenidUsername() {
@@ -80,7 +82,7 @@ public class SuperGluuAccessRequestFilterConfig {
 
     public String getJwtAuthKeyId() {
 
-        return bcService.getJwtAuthKeyId();
+        return cryptoService.getAuthSigningKeyId();
     }
 
     public SignatureAlgorithm getJwtAuthSignAlgo() {
@@ -90,31 +92,48 @@ public class SuperGluuAccessRequestFilterConfig {
 
     public String getTokenEndpointUrl() {
 
-        return this.openIdConfigService.getTokenEndpoint();
+        return openIdConfigService.getTokenEndpoint();
     }
 
     public String getAuthorizationEndpointUrl() {
 
-        return this.openIdConfigService.getAuthorizationEndpoint();
+        return openIdConfigService.getAuthorizationEndpoint();
     }
 
     public String getRegistrationEndpointUrl() {
 
-        return this.openIdConfigService.getRegistrationEndpoint();
+        return openIdConfigService.getRegistrationEndpoint();
     }
 
     public String getOpenIdBaseUrl() {
 
-        return this.serverConfig.getOpenidBaseUrl();
+        return serverConfig.getOpenidBaseUrl();
     }
 
     public String getSessionStatusUrl() {
 
-        return this.serverConfig.getOpenidBaseUrl() + SESSION_STATUS_URI;
+        return serverConfig.getOpenidBaseUrl() + SESSION_STATUS_URI;
+    }
+
+    public boolean isOneStepAuth() {
+
+        return bcService.isOneStepAuth();
+    }
+
+    public boolean isTwoStepAuth() {
+
+        return bcService.isTwoStepAuth();
     }
 
     public JSONObject getServerKeyset() {
 
-        return this.serverKeyset;
+        return cryptoService.getServerKeyset();
     }
+
+    public ICryptoProviderFactory getCryptoProviderFactory() {
+
+        return cryptoService;
+    }
+
+    
 }

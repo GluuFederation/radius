@@ -66,7 +66,7 @@ public class BootstrapConfigService  {
     private String jwtKeyStoreFile;
     private String jwtKeyStorePin;
     private String jwtAuthKeyId;
-    private Integer keygenInterval;
+    private Long keygenInterval;
     private SignatureAlgorithm jwtAuthSignAlgo;
     private String configDN;
     private String clientsDN;
@@ -135,7 +135,7 @@ public class BootstrapConfigService  {
         this.jwtAuthKeyId = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtAuthKeyId.getKeyName());
         String krinterval = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyGenInterval.getKeyName());
         try {
-            keygenInterval = Integer.parseInt(krinterval);
+            keygenInterval = Long.parseLong(krinterval);
             if(keygenInterval <= 0)
                 throw new ServiceException("Keygen interval lesser than or equal to 0.");
         }catch(NumberFormatException e) {
@@ -270,6 +270,11 @@ public class BootstrapConfigService  {
     public final String getJwtAuthKeyId() {
 
         return this.jwtAuthKeyId;
+    }
+
+    public final long getKeygenInterval() {
+
+        return this.keygenInterval;
     }
 
     public final SignatureAlgorithm getJwtAuthSignAlgo() {

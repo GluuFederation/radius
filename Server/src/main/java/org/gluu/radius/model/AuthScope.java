@@ -1,5 +1,6 @@
 package org.gluu.radius.model;
 
+import java.io.Serializable;
 import org.gluu.persist.annotation.AttributeName;
 import org.gluu.persist.annotation.DN;
 import org.gluu.persist.annotation.DataEntry;
@@ -7,7 +8,7 @@ import org.gluu.persist.annotation.ObjectClass;
 
 @DataEntry
 @ObjectClass(values={"oxAuthCustomScope","top"})
-public class AuthScope {
+public class AuthScope implements Serializable {
 
     private static final long serialVersionUID = -1L;
 

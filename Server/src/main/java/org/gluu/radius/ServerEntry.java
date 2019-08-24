@@ -1,12 +1,14 @@
 package org.gluu.radius;
 
 import java.security.Security;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.gluu.oxauth.client.JwkClient;
-import org.gluu.oxauth.client.JwkResponse;
+import org.gluu.oxauth.model.jwk.Algorithm;
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.radius.exception.GenericPersistenceException;
 import org.gluu.radius.exception.ServiceException;
@@ -17,89 +19,104 @@ import org.gluu.radius.persist.PersistenceEntryManagerFactory;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.server.lifecycle.*;
 import org.gluu.radius.service.BootstrapConfigService;
+import org.gluu.radius.service.CryptoService;
 import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.ServerConfigService;
-import org.json.JSONObject;
 
 
 public class ServerEntry {
 
+    private static final Integer DEFAULT_CERT_EXPIRY_TIME = 2;
+    private static final List<Algorithm> authSignatureAlgorithms = Arrays.asList(
+        Algorithm.RS256,
+        Algorithm.RS384,
+        Algorithm.RS512
+    );
     private static final Logger log = Logger.getLogger(ServerEntry.class);
     private static PersistenceEntryManager persistenceEntryManager = null;
-    private static JSONObject serverKeyset = null;
+    private static GluuRadiusServer serverInstance = null;
 
     public static void main(String[] args) {
 
         printStartupMessage();
         if (args.length == 0) {
-            log.error("Configuration file not specified on the command line. Exiting ... ");
+            log.error("Configuration file not specified on the command line.");
             System.exit(-1);
         }
 
         String appConfigFile = args[0];
+        log.info("Initializing server");
         log.info("Application bootstrap configuration file: " + appConfigFile);
 
-        log.info("Initializing Security Components ... ");
-        if (!initSecurity()) {
-            log.error("Could not initialize security components");
+        log.info("Initializing security components");
+        if(!initSecurity()) {
+            log.error("Security components initialization failed");
             System.exit(-1);
         }
+        log.info("Security components initialization successful");
 
-        
-        log.info("Registering BootstrapConfigService ... ");
+        log.info("Registering bootstrap configuration service");
         if(!registerBootstrapConfigService(appConfigFile)) {
-            log.error("BootstrapConfigService registration failed. Exiting ... ");
+            log.error("Bootstrap configuration service registration failed");
             System.exit(-1);
         }
-        log.info("done");
+        log.info("Bootstrap configuration service registered");
 
-        log.info("Initializing persistence layer ... ");
+        log.info("Initializing persistence layer");
         try {
             persistenceEntryManager = createPersistenceEntryManager();
             if(persistenceEntryManager == null) {
-                log.error("Could not initialize persistence layer. Exiting ... ");
+                log.error("Persistence layer initialization failed");
                 System.exit(-1);
             }
         }catch(GenericPersistenceException e) {
-            log.error("PersistenceEntryManager creation failed. Exiting ... ",e);
+            log.error("Persistence layer initialization failed",e);
             System.exit(-1);
         }
-        log.info("done");
+        log.info("Persistence layer initialized");
 
-        log.info("Registering RadiusClientService ... ");
+        log.info("Registering clients service");
         if(!registerRadiusClientService()) {
-            log.error("RadiusClientService registration failed. Exiting ... ");
+            log.error("Clients service registration failed");
             System.exit(-1);
         }
-        log.info("done");
+        log.info("Clients service registration complete");
 
-        log.info("Registering ServerConfigService ... ");
+        log.info("Registering server configuration service");
         if(!registerServerConfigService()) {
-            log.error("ServerConfigService registration failed. Exiting ... ");
+            log.error("Server configuration service registration failed");
             System.exit(-1);
         }
-        log.info("done");
+        log.info("Server configuration service registration complete");
 
-        log.info("Registering OpenIdConfigurationService ...");
+        log.info("Registering OpenID configuration service");
         if(!registerOpenIdConfigurationService()) {
-            log.error("OpenIdConfigurationService registration failed. Exiting ... ");
+            log.error("OpenID configuration service registration failed");
             System.exit(-1);
         }
-        log.info("done");
+        log.info("OpenID configuration service registration complete");
 
-        log.info("Downloading JWK Keyset from server ... ");
-        if(!downloadJwksFromServer()) {
-            log.error("Downloading keyset from server failed. Exiting ...");
+        log.info("Registering cryptographic service");
+        if(!registerCryptoService()) {
+            log.error("Cryptographic service registration failed");
             System.exit(-1);
         }
-        log.info("done");
+        log.info("Cryptographic service registration complete");
 
-        log.info("Starting Radius Server ...");
-        if(!startServer()) {
-            log.error("Error Starting GluuRadiusServer. Exiting ... ");
-            System.exit(-1);
+        if(isListenEnabled()) {
+            log.info("Starting radius server");
+            if(!startServer()) {
+                log.error("Radius server startup failed");
+                System.exit(-1);
+            }
+            log.info("Radius server started");
         }
+
+        log.info("Registering server shutdown hook");
+        registerServerShutdownHook();
+        log.info("Server shutdown hook registered");
+
         log.info("Initialization complete");
         
     }
@@ -132,6 +149,12 @@ public class ServerEntry {
         return success;
     }
 
+    private static final boolean isListenEnabled() {
+
+        BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
+        return bcService.isListenEnabled();
+    }
+
     private static final boolean registerRadiusClientService() {
 
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
@@ -152,8 +175,10 @@ public class ServerEntry {
 
         boolean ret = false;
         try {
+            BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
             ServerConfigService scService = ServiceLocator.getService(KnownService.ServerConfig);
-            OpenIdConfigurationService openIdConfigService = new OpenIdConfigurationService(scService);
+            OpenIdConfigurationService openIdConfigService = new OpenIdConfigurationService(scService,
+            persistenceEntryManager,bcService.getOpenidClientsDN());
             ServiceLocator.registerService(KnownService.OpenIdConfig,openIdConfigService);
             return true;
         }catch(ServiceException e) {
@@ -162,24 +187,24 @@ public class ServerEntry {
         return ret;
     }
 
-    private static final boolean downloadJwksFromServer() {
+    private static final boolean registerCryptoService() {
 
+        boolean ret = false;
         try {
-            OpenIdConfigurationService openIdConfigService = ServiceLocator.getService(KnownService.OpenIdConfig);
-            JwkClient client = new JwkClient(openIdConfigService.getJwksUri());
-            JwkResponse response =  client.exec();
-            if(response == null || (response!=null && response.getStatus()!=200)) {
-                log.error("Jwks download failed");
-                return false;
-            }else {
-                serverKeyset = response.getJwks().toJSONObject();
-                return true;
-            }
+            BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
+            Integer expiry = DEFAULT_CERT_EXPIRY_TIME;
+            CryptoService cryptoService = new CryptoService(bcService,authSignatureAlgorithms,expiry,0);
+            ServiceLocator.registerService(KnownService.Crypto,cryptoService);
+            ret = true;
         }catch(ServiceException e) {
-            log.error("Jwks Download Failed",e);
-            return false;
+            log.error(e.getMessage(),e);
+        }catch(Exception e) {
+            log.error(e.getMessage(),e);
         }
+        return ret;
     }
+
+    
 
     private static final PersistenceEntryManager createPersistenceEntryManager() {
 
@@ -207,11 +232,10 @@ public class ServerEntry {
 
         boolean ret = false;
         try {
-            ServerFactory.useServerKeyset(serverKeyset);
-            GluuRadiusServer serverInstance = ServerFactory.createServer();
-            serverInstance.run();
-            registerServerShutdownHook(serverInstance);
+            GluuRadiusServer server = ServerFactory.createServer();
+            server.run();
             ret = true;
+            serverInstance = server;
         }catch(ServerException e) {
             log.error("Error running radius server",e);
         }catch(ServerFactoryException e) {
@@ -221,9 +245,9 @@ public class ServerEntry {
     }
 
 
-    private static final void registerServerShutdownHook(GluuRadiusServer server) {
+    private static final void registerServerShutdownHook() {
 
-        Runner runner = new Runner(server);
+        Runner runner = new Runner(serverInstance);
         runner.start();
         Runtime.getRuntime().addShutdownHook(new ShutdownHook(runner));
     }

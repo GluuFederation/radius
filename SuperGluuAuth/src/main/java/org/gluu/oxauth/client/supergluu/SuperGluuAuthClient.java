@@ -48,6 +48,7 @@ public class SuperGluuAuthClient {
     private static final String SESSION_ID_PARAM_NAME = "__session_id";
     private static final String REMOTE_IP_PARAM_NAME  = "__remote_ip";
     private static final String SESSION_ID_CLAIM_NAME = "__session_id";
+    private static final String AUTH_SCHEME_PARAM_NAME = "__auth_scheme";
     private static final String INITIATE_AUTH_STEP_NAME = "initiate_auth";
     private static final String RESEND_NOTIFICATION_STEP_NAME = "resend_notification";
     private static final String VERIFY_AUTH_STEP_NAME = "verify_auth";
@@ -60,6 +61,7 @@ public class SuperGluuAuthClient {
     private TokenClient tokenClient;
     private SessionStatusClient sessionStatusClient;
     private JSONObject serverKeyset;
+    private SuperGluuAuthScheme authScheme;
 
     public SuperGluuAuthClient(SuperGluuAuthClientConfig config, IHttpClientFactory httpClientFactory) {
         authContext = new AuthenticationContext();
@@ -69,6 +71,7 @@ public class SuperGluuAuthClient {
         tokenClient.setExecutor(createExecutor(httpClientFactory));
         sessionStatusClient = new SessionStatusClient(config.getSessionStatusUrl());
         sessionStatusClient.setExecutor(createExecutor(httpClientFactory,true));
+        authScheme = SuperGluuAuthScheme.TWO_STEP;
     }
 
     public SuperGluuAuthClient(SuperGluuAuthClientConfig config, 
@@ -76,18 +79,24 @@ public class SuperGluuAuthClient {
         
         authContext = new AuthenticationContext();
         this.config = config;
-        cryptoProvider = cryptoProviderFactory.newCryptoProvider();
+        this.cryptoProvider = cryptoProviderFactory.newCryptoProvider();
         this.serverKeyset = serverKeyset;
         tokenClient = new TokenClient(config.getTokenEndpointUrl());
         tokenClient.setExecutor(createExecutor(httpClientFactory));
         sessionStatusClient = new SessionStatusClient(config.getSessionStatusUrl());
         sessionStatusClient.setExecutor(createExecutor(httpClientFactory,true));
+        authScheme = SuperGluuAuthScheme.TWO_STEP;
     }
 
     public void setCryptoProvider(AbstractCryptoProvider cryptoProvider) {
 
         this.cryptoProvider = cryptoProvider;
     }
+
+    public void setAuthScheme(SuperGluuAuthScheme authScheme) {
+
+        this.authScheme = authScheme;
+    } 
     
     public Boolean initiateAuthentication(String username,String password) {
 
@@ -107,7 +116,10 @@ public class SuperGluuAuthClient {
             
             return false;
         }
-
+        
+        if(authScheme == SuperGluuAuthScheme.ONE_STEP)
+            return true;
+        
         String idtoken = response.getIdToken();
         if (idtoken == null || (idtoken != null && idtoken.isEmpty())) {
             log.debug("SuperGluu initial auth failed. No id_token returned. " + response.getEntity());
@@ -198,6 +210,7 @@ public class SuperGluuAuthClient {
             request.addCustomParameter(REMOTE_IP_PARAM_NAME,userip);
         
         request.addCustomParameter(STEP_PARAM_NAME,INITIATE_AUTH_STEP_NAME);
+        request.addCustomParameter(AUTH_SCHEME_PARAM_NAME, authScheme.schemeName());
 
         configureTokenRequestAuthentication(request,username,password);
         return request;
