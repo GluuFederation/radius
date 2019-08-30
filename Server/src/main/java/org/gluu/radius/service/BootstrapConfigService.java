@@ -79,6 +79,8 @@ public class BootstrapConfigService  {
         String listen = oxRadiusConfig.getProperty(BootstrapConfigKeys.ListenEnable.getKeyName());
         if(listen == null)
             throw new ServiceException("Server listening status not specified.");
+        
+        listen.trim();
         if(listen.equalsIgnoreCase("true"))
             listenEnabled = true;
         else if(listen.equalsIgnoreCase("false"))
@@ -89,6 +91,7 @@ public class BootstrapConfigService  {
         String authscheme = oxRadiusConfig.getProperty(BootstrapConfigKeys.AuthScheme.getKeyName());
         if(authscheme == null)
             throw new ServiceException("Unspecified authentication scheme");
+        authscheme = authscheme.trim();
         if(authscheme.equalsIgnoreCase("onestep")) {
             scheme = AuthScheme.ONE_STEP_AUTH;
         }else if(authscheme.equalsIgnoreCase("twostep")) {
@@ -99,6 +102,7 @@ public class BootstrapConfigService  {
         String saltFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.SaltFile.getKeyName());
         if(saltFile == null)
             throw new ServiceException("Salt file not found");
+        saltFile = saltFile.trim();
         this.salt = loadEncodeSalt(saltFile);
         this.persistenceBackendConfig = new HashMap<PersistenceBackendType,Properties>();
         String persistFile = oxRadiusConfig.getProperty(BootstrapConfigKeys.PersistenceConfigFile.getKeyName());
@@ -136,8 +140,8 @@ public class BootstrapConfigService  {
         String krinterval = oxRadiusConfig.getProperty(BootstrapConfigKeys.JwtKeyGenInterval.getKeyName());
         try {
             keygenInterval = Long.parseLong(krinterval);
-            if(keygenInterval <= 0)
-                throw new ServiceException("Keygen interval lesser than or equal to 0.");
+            if(keygenInterval < 0)
+                throw new ServiceException("Keygen interval lesser than 0.");
         }catch(NumberFormatException e) {
             throw new ServiceException("Invalid value for keygen interval.");
         }

@@ -68,6 +68,13 @@
       <version>${gluu.components.version}</version>
     </dependency>
 
+    <!-- oxauth server -->
+    <dependency>
+      <groupId>org.gluu</groupId>
+      <artifactId>oxauth-server</artifactId>
+      <version>${gluu.components.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.gluu</groupId>
       <artifactId>supergluu-auth-client</artifactId>

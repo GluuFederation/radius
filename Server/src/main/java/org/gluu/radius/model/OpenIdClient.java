@@ -1,13 +1,14 @@
 package org.gluu.radius.model;
 
 import java.io.Serializable;
+import java.util.List;
 import org.gluu.persist.annotation.AttributeName;
 import org.gluu.persist.annotation.DataEntry;
 import org.gluu.persist.annotation.DN;
 import org.gluu.persist.annotation.ObjectClass;
 
 @DataEntry
-@ObjectClass(values={"oxAuthClient","top"})
+@ObjectClass(values={"oxAuthClient"})
 public class OpenIdClient implements Serializable {
 
     private static final long serialVersionUID = -1L;
@@ -29,6 +30,9 @@ public class OpenIdClient implements Serializable {
 
     @AttributeName(name="oxAuthTokenEndpointAuthMethod")
     private String tokenEndpointAuthMethod;
+
+    @AttributeName(name="oxAuthScope")
+    private List<String> scopes;
 
     public OpenIdClient() {
 
@@ -92,5 +96,14 @@ public class OpenIdClient implements Serializable {
     public String getTokenEndpointAuthMethod() {
 
         return this.tokenEndpointAuthMethod;
+    }
+
+    public List<String> getScopes() {
+
+        return this.scopes;
+    }
+
+    public void setScopes(List<String> scopes) {
+        this.scopes = scopes;
     }
 }

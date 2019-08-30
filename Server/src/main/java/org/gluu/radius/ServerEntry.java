@@ -1,7 +1,6 @@
 package org.gluu.radius;
 
 import java.security.Security;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -14,6 +13,7 @@ import org.gluu.radius.exception.GenericPersistenceException;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.exception.ServerException;
 import org.gluu.radius.exception.ServerFactoryException;
+import org.gluu.oxauth.model.registration.Client;
 import org.gluu.radius.persist.PersistenceBackendType;
 import org.gluu.radius.persist.PersistenceEntryManagerFactory;
 import org.gluu.radius.server.GluuRadiusServer;
@@ -70,6 +70,10 @@ public class ServerEntry {
                 log.error("Persistence layer initialization failed");
                 System.exit(-1);
             }
+            String clientdn = "inum=0008-86e0603c-2191-457c-b492-33ac9a9e7a30,ou=clients,o=gluu";
+            Client myclient = persistenceEntryManager.find(Client.class,clientdn);
+            log.info(String.format("Client name: %s",myclient.getClientName()));
+            
         }catch(GenericPersistenceException e) {
             log.error("Persistence layer initialization failed",e);
             System.exit(-1);

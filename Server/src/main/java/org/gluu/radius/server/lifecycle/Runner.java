@@ -27,6 +27,7 @@ public class Runner extends Thread {
     private long keygenLastRun;
     private long jwksDownloadLastRun;
     private JSONWebKeySet currentKeyset;
+    private boolean forceJwksDownload;
 
     public Runner(GluuRadiusServer server) {
 
@@ -34,7 +35,7 @@ public class Runner extends Thread {
         this.stop = false;
         this.keygenLastRun = System.currentTimeMillis();
         this.jwksDownloadLastRun = System.currentTimeMillis();
-        this.currentKeyset = null;
+        this.forceJwksDownload = true;
     }
 
     @Override
@@ -82,12 +83,12 @@ public class Runner extends Thread {
                 SignatureAlgorithm authsignalgorithm = bcService.getJwtAuthSignAlgo();
                 saveOpenIdClientConfig(inum,currentKeyset,authsignalgorithm);
                 currentKeyset = null; // once it's saved , no need saving it again
-                log.info("Clieng keyset update succesful");
+                log.info("Client keyset update succesful");
             }
 
             long durationsincelastdownload = System.currentTimeMillis() - jwksDownloadLastRun;
             long downloadinterval = DEFAULT_JWKS_DOWNLOAD_INTERVAL * 60 * 1000;
-            if(durationsincelastdownload >= downloadinterval) {
+            if(forceJwksDownload == true || (durationsincelastdownload >= downloadinterval)) {
                 log.info("Downloading server JWKS");
                 if(downloadJwksServerKeys() == false) {
                     log.info("Server JWKS download failed");
@@ -95,6 +96,7 @@ public class Runner extends Thread {
                     log.info("Server JWKS download successful");
                     jwksDownloadLastRun = System.currentTimeMillis();
                 }
+                forceJwksDownload = false;
             }
 
         }catch(Exception e) {
