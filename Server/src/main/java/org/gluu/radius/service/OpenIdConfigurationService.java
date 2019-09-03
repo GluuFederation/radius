@@ -2,11 +2,12 @@ package org.gluu.radius.service;
 
 import java.io.IOException;
 import org.gluu.radius.exception.ServiceException;
-import org.gluu.radius.KnownService;
+import org.gluu.radius.model.Client;
 import org.gluu.radius.service.ServerConfigService;
-import org.gluu.radius.ServiceLocator;
 import org.gluu.oxauth.client.OpenIdConfigurationClient;
 import org.gluu.oxauth.client.OpenIdConfigurationResponse;
+import org.gluu.persist.PersistenceEntryManager;
+import org.gluu.persist.exception.EntryPersistenceException;
 
 public class OpenIdConfigurationService {
 
@@ -14,9 +15,14 @@ public class OpenIdConfigurationService {
     private String registrationEndpoint;
     private String tokenEndpoint;
     private String jwksUri;
+    private final String openidClientsEntryDn;
+    private PersistenceEntryManager persistenceEntryManager;
 
-    public OpenIdConfigurationService(ServerConfigService serverConfigService) {
+    public OpenIdConfigurationService(ServerConfigService serverConfigService,
+        PersistenceEntryManager persistenceEntryManager, String openidClientsEntryDn) {
 
+        this.persistenceEntryManager = persistenceEntryManager;
+        this.openidClientsEntryDn = openidClientsEntryDn;
         loadOpenIdConfiguration(serverConfigService);
     }
 
@@ -40,7 +46,28 @@ public class OpenIdConfigurationService {
         return this.jwksUri;
     }
 
-    private void loadOpenIdConfiguration(ServerConfigService serverConfigService) {
+    public Client loadOpenIdClient(String inum) {
+
+        Client client = null;
+        try {
+            String dn = this.getDnForOpenIdClient(inum);
+            client = persistenceEntryManager.find(Client.class,dn);
+        }catch(EntryPersistenceException e) {
+            throw new ServiceException("Failed to fetch openid client",e);
+        }
+        return client;
+    }
+
+    public void saveOpenIdClient(Client client) {
+
+        try {
+            persistenceEntryManager.merge(client);
+        }catch(EntryPersistenceException e) {
+            throw new ServiceException("Failed to save openid client",e);
+        }
+    }
+
+    private final void loadOpenIdConfiguration(ServerConfigService serverConfigService) {
 
         try {
             String openIdBaseUrl = serverConfigService.getServerConfiguration().getOpenidBaseUrl();
@@ -61,4 +88,9 @@ public class OpenIdConfigurationService {
         }
     }
     
+
+    private final String getDnForOpenIdClient(String inum) {
+
+        return String.format("inum=%s,%s",inum,openidClientsEntryDn);
+    }
 }

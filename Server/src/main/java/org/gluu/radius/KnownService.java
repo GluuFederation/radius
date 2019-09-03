@@ -5,7 +5,8 @@ public enum KnownService {
     BootstrapConfig("BootstrapConfig"),
     RadiusClient("RadiusClient"),
     ServerConfig("ServerConfig"),
-    OpenIdConfig("OpenIdConfig");
+    OpenIdConfig("OpenIdConfig"),
+    Crypto("Crypto");
 
     private final String serviceid;
 

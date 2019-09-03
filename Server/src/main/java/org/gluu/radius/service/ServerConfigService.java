@@ -3,21 +3,17 @@ package org.gluu.radius.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 
 import org.gluu.persist.PersistenceEntryManager;
 import org.gluu.persist.exception.EntryPersistenceException;
-import org.gluu.persist.model.SearchScope;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.AuthScope;
 import org.gluu.radius.model.ServerConfiguration;
-import org.gluu.search.filter.Filter;
 
 
 public class ServerConfigService {
 
-    private static final Logger log = Logger.getLogger(ServerConfigService.class);
-
+    
     private String configEntryDn;
     private PersistenceEntryManager persistenceEntryManager;
 
@@ -50,5 +46,6 @@ public class ServerConfigService {
         }
         return ret;
     }
+
 
 }
