@@ -2,7 +2,7 @@ package org.gluu.radius.service;
 
 import java.io.IOException;
 import org.gluu.radius.exception.ServiceException;
-import org.gluu.radius.model.OpenIdClient;
+import org.gluu.radius.model.Client;
 import org.gluu.radius.service.ServerConfigService;
 import org.gluu.oxauth.client.OpenIdConfigurationClient;
 import org.gluu.oxauth.client.OpenIdConfigurationResponse;
@@ -46,19 +46,19 @@ public class OpenIdConfigurationService {
         return this.jwksUri;
     }
 
-    public OpenIdClient loadOpenIdClient(String inum) {
+    public Client loadOpenIdClient(String inum) {
 
-        OpenIdClient client = null;
+        Client client = null;
         try {
             String dn = this.getDnForOpenIdClient(inum);
-            client = persistenceEntryManager.find(OpenIdClient.class,dn);
+            client = persistenceEntryManager.find(Client.class,dn);
         }catch(EntryPersistenceException e) {
             throw new ServiceException("Failed to fetch openid client",e);
         }
         return client;
     }
 
-    public void saveOpenIdClient(OpenIdClient client) {
+    public void saveOpenIdClient(Client client) {
 
         try {
             persistenceEntryManager.merge(client);

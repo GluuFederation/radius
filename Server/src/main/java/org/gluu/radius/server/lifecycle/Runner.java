@@ -1,14 +1,16 @@
 package org.gluu.radius.server.lifecycle;
 
+import java.io.File;
+
 import org.apache.log4j.Logger;
 import org.gluu.oxauth.client.JwkClient;
 import org.gluu.oxauth.client.JwkResponse;
 import org.gluu.oxauth.model.crypto.signature.SignatureAlgorithm;
 import org.gluu.oxauth.model.jwk.JSONWebKeySet;
 import org.gluu.radius.KnownService;
+import org.gluu.radius.model.Client;
 import org.gluu.radius.ServiceLocator;
 import org.gluu.radius.exception.ServerException;
-import org.gluu.radius.model.OpenIdClient;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.service.BootstrapConfigService;
 import org.gluu.radius.service.CryptoService;
@@ -68,33 +70,27 @@ public class Runner extends Thread {
             cryptoService.beginWriteOpts();
             BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
             long durationsincelastrun = System.currentTimeMillis() - keygenLastRun;
-            long updateinterval = bcService.getKeygenInterval() * 1000;
+            long updateinterval = bcService.getKeygenInterval() * 86400 * 1000; 
             if(bcService.getKeygenInterval() != 0 && (durationsincelastrun >= updateinterval)) {
-                log.info("Generating cryptographic certificates");
                 currentKeyset = generateKeys(cryptoService);
+                cryptoService.exportAuthPrivateKeyToPem();
                 keygenLastRun = System.currentTimeMillis();
-                log.info("Cryptographic certificate generation failed");
             }
 
             if(currentKeyset != null) {
-                log.info("Updating client keyset");
+
                 ServerConfigService scService = ServiceLocator.getService(KnownService.ServerConfig);
                 String inum = scService.getServerConfiguration().getOpenidUsername();
                 SignatureAlgorithm authsignalgorithm = bcService.getJwtAuthSignAlgo();
                 saveOpenIdClientConfig(inum,currentKeyset,authsignalgorithm);
                 currentKeyset = null; // once it's saved , no need saving it again
-                log.info("Client keyset update succesful");
             }
 
             long durationsincelastdownload = System.currentTimeMillis() - jwksDownloadLastRun;
             long downloadinterval = DEFAULT_JWKS_DOWNLOAD_INTERVAL * 60 * 1000;
             if(forceJwksDownload == true || (durationsincelastdownload >= downloadinterval)) {
-                log.info("Downloading server JWKS");
-                if(downloadJwksServerKeys() == false) {
-                    log.info("Server JWKS download failed");
-                }else {
-                    log.info("Server JWKS download successful");
-                    jwksDownloadLastRun = System.currentTimeMillis();
+                if(downloadJwksServerKeys() == true) {
+                    jwksDownloadLastRun = System.currentTimeMillis();  
                 }
                 forceJwksDownload = false;
             }
@@ -116,10 +112,10 @@ public class Runner extends Thread {
     private final void saveOpenIdClientConfig(String inum,JSONWebKeySet keyset,SignatureAlgorithm authSignatureAlgorithm) {
 
         OpenIdConfigurationService openidService = ServiceLocator.getService(KnownService.OpenIdConfig);
-        OpenIdClient client = openidService.loadOpenIdClient(inum);
-        client.setKeyset(keyset.toString());
+        Client client = openidService.loadOpenIdClient(inum);
+        client.setJwks(keyset.toString());
         client.setTokenEndpointAuthMethod(PRIVATE_KEY_JWT_AUTH);
-        client.setTokenEndpointAuthSigningAlgorithm(authSignatureAlgorithm.name());
+        client.setTokenEndpointAuthSigningAlg(authSignatureAlgorithm.name());
         openidService.saveOpenIdClient(client);
     }
 
