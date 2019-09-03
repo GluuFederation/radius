@@ -1,6 +1,6 @@
 package org.gluu.radius;
 
-import java.io.File;
+
 import java.security.Security;
 import java.util.Arrays;
 import java.util.List;

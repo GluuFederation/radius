@@ -1,6 +1,7 @@
 package org.gluu.radius.server.lifecycle;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.gluu.oxauth.client.JwkClient;
@@ -24,6 +25,7 @@ public class Runner extends Thread {
     private static final long sleeptimeout = 2000; // 2 seconds 
     private static final String PRIVATE_KEY_JWT_AUTH = "private_key_jwt";
     private static final long DEFAULT_JWKS_DOWNLOAD_INTERVAL = 5; // in minutes
+    private static final String HEALTH_STATUS_FILE = "/tmp/gluu-radius-health";
     private GluuRadiusServer server;
     private boolean stop;
     private long keygenLastRun;
@@ -44,6 +46,9 @@ public class Runner extends Thread {
     public void run() {
 
         try {
+            if(!createHealthStatusFile()) {
+                log.warn("Could not create the health status check file");
+            }
             while(!stop) {
                 log.info("Performing background operations");
                 performBackgroundOperations();
@@ -132,6 +137,19 @@ public class Runner extends Thread {
             CryptoService cryptoService = ServiceLocator.getService(KnownService.Crypto);
             cryptoService.setServerKeyset(jwks);
             return true;
+        }
+    }
+
+    private final boolean createHealthStatusFile() {
+
+        try {
+            File hsf = new File(HEALTH_STATUS_FILE);
+            if(hsf.exists())
+                hsf.delete();
+            return hsf.createNewFile();
+        }catch(IOException e) {
+            log.error("Error creating health status file",e);
+            return false;
         }
     }
 }
