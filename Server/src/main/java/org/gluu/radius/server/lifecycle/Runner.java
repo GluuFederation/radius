@@ -50,9 +50,9 @@ public class Runner extends Thread {
                 log.warn("Could not create the health status check file");
             }
             while(!stop) {
-                log.info("Performing background operations");
+                log.debug("Performing background operations");
                 performBackgroundOperations();
-                log.info("Background operations complete");
+                log.debug("Background operations complete");
                 Thread.sleep(sleeptimeout);
             }
             if(server!=null)

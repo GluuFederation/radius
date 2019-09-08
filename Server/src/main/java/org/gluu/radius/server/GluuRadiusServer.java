@@ -101,16 +101,22 @@ public final class GluuRadiusServer implements RadiusEventListener {
 
     @Override
     public void onSharedSecretRequest(SharedSecretRequestContext context) {
-        List<RadiusClient> clients = radiusClientService.getRadiusClients();
-        clients.sort(new RadiusClientComparator());
-        for(RadiusClient client : clients) {
-            for(RadiusClientMatcher matcher : runConfig.getClientMatchers()) {
-                if(matcher.match(context.getClientIpAddress(), client)) {
-                    String secret = EncDecUtil.decode(client.getSecret(),salt);
-                    context.setSharedSecret(secret);
-                    break;
+       
+        try {
+            List<RadiusClient> clients = radiusClientService.getRadiusClients();
+            clients.sort(new RadiusClientComparator());
+            for(RadiusClient client : clients) {
+                log.info(String.format("Client ip: %s",context.getClientIpAddress()));
+                for(RadiusClientMatcher matcher : runConfig.getClientMatchers()) {
+                    if(matcher.match(context.getClientIpAddress(),client)) {
+                        String secret = EncDecUtil.decode(client.getSecret(),salt);
+                        context.setSharedSecret(secret);
+                        break;
+                    }
                 }
             }
+        }catch(Exception e) {
+            log.info("Shared secret request failed",e);
         }
     }
 

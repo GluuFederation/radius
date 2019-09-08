@@ -7,7 +7,6 @@ import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.RadiusClient;
 import org.gluu.persist.exception.EntryPersistenceException;
 import org.gluu.persist.PersistenceEntryManager;
-import org.gluu.persist.model.SearchScope;
 import org.gluu.search.filter.Filter;
 
 
@@ -40,7 +39,8 @@ public class RadiusClientService  {
     public List<RadiusClient> getRadiusClients() {
 
         try {
-            return persistenceEntryManager.findEntries(configEntryDn,RadiusClient.class,null);
+            Filter searchFilter = Filter.createPresenceFilter("oxRadiusClientIpAddress");
+            return persistenceEntryManager.findEntries(configEntryDn,RadiusClient.class,searchFilter);
         }catch(EntryPersistenceException e) {
             throw new ServiceException("Failed fetching clients",e);
         }
@@ -50,5 +50,5 @@ public class RadiusClientService  {
 
        Filter ipFilter  = Filter.createEqualityFilter("oxRadiusClientIpAddress",ipaddress);
        return ipFilter;
-    } 
+    }
 }
