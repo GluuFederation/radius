@@ -11,6 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.apache.log4j.Logger;
 import org.bouncycastle.openssl.PEMEncryptor;
 import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
@@ -31,6 +32,8 @@ import static org.gluu.oxauth.model.jwk.JWKParameter.*;
 
 
 public class CryptoService implements ICryptoProviderFactory{
+
+    private static final Logger log = Logger.getLogger(CryptoService.class);
 
     private static final String dnName = "CN=Gluu Radius CA Certificates";
     private static final String PRIVATE_KEY_ENC_ALGORITHM = "AES-256-CBC";
@@ -160,6 +163,10 @@ public class CryptoService implements ICryptoProviderFactory{
         FileWriter filewriter = null;
         JcaPEMWriter pemwriter = null;
         try {
+            if(!outfile.canWrite()) {
+                log.warn(String.format("The private key file %s is not writable.",outfile.getAbsolutePath()));
+                return;   
+            }
             final PEMEncryptor encryptor = new JcePEMEncryptorBuilder(PRIVATE_KEY_ENC_ALGORITHM)
                 .build(passphrase.toCharArray());
             PrivateKey privatekey = cryptoProvider.getPrivateKey(authSigningKeyId);
