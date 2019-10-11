@@ -61,8 +61,10 @@ public class CryptoService implements ICryptoProviderFactory{
         String keyStorePin = bcService.getJwtKeyStorePin();
         this.authSigningKeyId = bcService.getJwtAuthKeyId();
         this.cryptoProvider = new OxAuthCryptoProvider(keyStoreFile,keyStorePin,dnName);
-        SignatureAlgorithm algo = bcService.getJwtAuthSignAlgo();
+        SignatureAlgorithm signalgo = bcService.getJwtAuthSignAlgo();
+        Algorithm algo = Algorithm.fromString(signalgo.getName());
         this.authSigningKeyId = cryptoProvider.getAliasByAlgorithmForDeletion(algo,"",Use.SIGNATURE);
+        log.info(String.format("Auth signing keyId: %s",this.authSigningKeyId));
         this.cryptoLock = new ReentrantReadWriteLock();
     }
 
@@ -134,7 +136,7 @@ public class CryptoService implements ICryptoProviderFactory{
             }
 
             keyset.getKeys().add(key);
-            String oldkey = cryptoProvider.getAliasByAlgorithmForDeletion(signalgo,key.getKid(),Use.SIGNATURE);
+            String oldkey = cryptoProvider.getAliasByAlgorithmForDeletion(algorithm,key.getKid(),Use.SIGNATURE);
             if(oldkey != null) {
                 cryptoProvider.deleteKey(oldkey);
             }
