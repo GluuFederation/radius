@@ -1,7 +1,5 @@
 package org.gluu.radius.server.filter;
 
-import javax.lang.model.util.ElementScanner6;
-
 import org.apache.log4j.Logger;
 import org.gluu.radius.exception.GluuRadiusException;
 import org.gluu.radius.server.AccessRequestContext;
