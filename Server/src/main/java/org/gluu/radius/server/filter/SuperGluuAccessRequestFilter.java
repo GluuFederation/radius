@@ -40,10 +40,12 @@ public class SuperGluuAccessRequestFilter implements AccessRequestFilter {
                 ret = performOneStepAuth(context);
             else if(filterConfig.isTwoStepAuth())
                 ret = performTwoStepAuth(context);
+            else {
+                log.debug("Authentication scheme is neither one-step nor two-step");
+            }
         }finally {
             cryptoService.endReadOpts();
         }
-        log.debug("Authentication scheme is neither one-step nor two-step");
         return ret;
     }
 
