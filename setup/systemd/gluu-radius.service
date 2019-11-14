@@ -9,6 +9,7 @@ ExecStart=/etc/init.d/gluu-radius start
 ExecStop=/etc/init.d/gluu-radius stop
 User=radius
 Group=gluu
+SuccessExitStatus=143
 
 [Install]
 WantedBy=multi-user.target
