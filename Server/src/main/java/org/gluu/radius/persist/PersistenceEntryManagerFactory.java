@@ -54,9 +54,9 @@ public class PersistenceEntryManagerFactory {
             PersistenceEntryManager ldapEntryManager = createLdapPersistenceEntryManager(ldap_props);
             PersistenceEntryManager couchbaseEntryManager = createCouchbasePersistenceEntryManager(couchbaseprops);
             HashMap<String,PersistenceEntryManager> managers = new HashMap<String,PersistenceEntryManager>();
-            managers.put(LdapEntryManagerFactory.PERSISTANCE_TYPE,ldapEntryManager);
-            managers.put(CouchbaseEntryManagerFactory.PERSISTANCE_TYPE,couchbaseEntryManager);
-            //Properties mapping = createConnectionProperties(hybridprops,HybridEntryManagerFactory.PERSISTANCE_TYPE);
+            managers.put(LdapEntryManagerFactory.PERSISTENCE_TYPE,ldapEntryManager);
+            managers.put(CouchbaseEntryManagerFactory.PERSISTENCE_TYPE,couchbaseEntryManager);
+            //Properties mapping = createConnectionProperties(hybridprops,HybridEntryManagerFactory.PERSISTENCE_TYPE);
             List<PersistenceOperationService> persistenceOperationServices = new ArrayList<PersistenceOperationService>();
             persistenceOperationServices.add(ldapEntryManager.getOperationService());
             persistenceOperationServices.add(couchbaseEntryManager.getOperationService());
