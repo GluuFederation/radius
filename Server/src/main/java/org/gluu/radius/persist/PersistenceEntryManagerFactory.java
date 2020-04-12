@@ -8,7 +8,6 @@ import java.util.Properties;
 import org.gluu.persist.couchbase.impl.CouchbaseEntryManagerFactory;
 import org.gluu.persist.exception.operation.ConfigurationException;
 import org.gluu.persist.hybrid.impl.HybridEntryManager;
-import org.gluu.persist.hybrid.impl.HybridEntryManagerFactory;
 import org.gluu.persist.hybrid.impl.HybridPersistenceOperationService;
 import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
 import org.gluu.persist.operation.PersistenceOperationService;
