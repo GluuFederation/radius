@@ -286,7 +286,7 @@ public class SuperGluuAuthClient {
             String keyId = jwt.getHeader().getKeyId();
             return cryptoProvider.verifySignature(
                 jwt.getSigningInput(),jwt.getEncodedSignature(), keyId,
-                serverKeyset,null,jwt.getHeader().getAlgorithm());
+                serverKeyset,null,jwt.getHeader().getSignatureAlgorithm());
         }catch(Exception e) {
             log.debug("JWT token signature verification failed",e);
             return false;

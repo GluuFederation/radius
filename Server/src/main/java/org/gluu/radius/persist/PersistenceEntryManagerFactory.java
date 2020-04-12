@@ -8,7 +8,6 @@ import java.util.Properties;
 import org.gluu.persist.couchbase.impl.CouchbaseEntryManagerFactory;
 import org.gluu.persist.exception.operation.ConfigurationException;
 import org.gluu.persist.hybrid.impl.HybridEntryManager;
-import org.gluu.persist.hybrid.impl.HybridEntryManagerFactory;
 import org.gluu.persist.hybrid.impl.HybridPersistenceOperationService;
 import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
 import org.gluu.persist.operation.PersistenceOperationService;
@@ -56,7 +55,6 @@ public class PersistenceEntryManagerFactory {
             HashMap<String,PersistenceEntryManager> managers = new HashMap<String,PersistenceEntryManager>();
             managers.put(LdapEntryManagerFactory.PERSISTENCE_TYPE,ldapEntryManager);
             managers.put(CouchbaseEntryManagerFactory.PERSISTENCE_TYPE,couchbaseEntryManager);
-            //Properties mapping = createConnectionProperties(hybridprops,HybridEntryManagerFactory.PERSISTENCE_TYPE);
             List<PersistenceOperationService> persistenceOperationServices = new ArrayList<PersistenceOperationService>();
             persistenceOperationServices.add(ldapEntryManager.getOperationService());
             persistenceOperationServices.add(couchbaseEntryManager.getOperationService());
