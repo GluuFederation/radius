@@ -19,14 +19,14 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.gluu.oxauth.model.jwk.Algorithm;
 import org.gluu.oxauth.model.jwk.JSONWebKeySet;
 import org.gluu.persist.PersistenceEntryManager;
+import org.gluu.persist.PersistenceEntryManagerFactory;
+import org.gluu.persist.model.PersistenceConfiguration;
 import org.gluu.radius.exception.GenericPersistenceException;
 import org.gluu.radius.exception.ServiceException;
 import org.gluu.radius.model.Client;
 import org.gluu.radius.model.ServerConfiguration;
 import org.gluu.radius.exception.ServerException;
 import org.gluu.radius.exception.ServerFactoryException;
-import org.gluu.radius.persist.PersistenceBackendType;
-import org.gluu.radius.persist.PersistenceEntryManagerFactory;
 import org.gluu.radius.server.GluuRadiusServer;
 import org.gluu.radius.server.lifecycle.*;
 import org.gluu.radius.service.BootstrapConfigService;
@@ -34,6 +34,7 @@ import org.gluu.radius.service.CryptoService;
 import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.ServerConfigService;
+import org.gluu.persist.service.StandalonePersistanceFactoryService;
 
 
 public class ServerEntry {
@@ -45,6 +46,8 @@ public class ServerEntry {
         Algorithm.RS512
     );
     private static final Logger log = Logger.getLogger(ServerEntry.class);
+    private static StandalonePersistanceFactoryService standalonePfService = null;
+    private static PersistenceEntryManagerFactory persistenceEntryManagerFactory = null;
     private static PersistenceEntryManager persistenceEntryManager = null;
     private static GluuRadiusServer serverInstance = null;
 
@@ -109,6 +112,9 @@ public class ServerEntry {
             }
         }catch(GenericPersistenceException e) {
             log.error("Persistence layer initialization failed",e);
+            System.exit(-1);
+        }catch(Exception ex) {
+            log.error("Persistence layer initialization failed",ex);
             System.exit(-1);
         }
         log.info("Persistence layer initialization successful");
@@ -363,22 +369,12 @@ public class ServerEntry {
     private static final PersistenceEntryManager createPersistenceEntryManager() {
 
         BootstrapConfigService bcService = ServiceLocator.getService(KnownService.BootstrapConfig);
+        standalonePfService = new StandalonePersistanceFactoryService();
+        PersistenceConfiguration persistenceConfiguration = standalonePfService.loadPersistenceConfiguration(null);
 
-        if (bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_LDAP) {
-            Properties props = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_LDAP);
-            return PersistenceEntryManagerFactory.createLdapPersistenceEntryManager(props);
-        }else if(bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE) {
-            Properties props = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE);
-            return PersistenceEntryManagerFactory.createCouchbasePersistenceEntryManager(props);
-        }else if(bcService.getPersistenceBackend() == PersistenceBackendType.PERSISTENCE_BACKEND_HYBRID) {
-            Properties hybridprops = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_HYBRID);
-            Properties ldap_props = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_LDAP);
-            Properties couchbaseprops = bcService.getBackendConfiguration(PersistenceBackendType.PERSISTENCE_BACKEND_COUCHBASE);
-            return PersistenceEntryManagerFactory.createHybridPersistenceEntryManager(hybridprops,ldap_props,couchbaseprops);
-        }else
-            log.error("unsupported persistence backend");
-
-        return null;
+        Properties connectionProperties = bcService.preparePersistenceProperties(persistenceConfiguration);
+        persistenceEntryManagerFactory = standalonePfService.getPersistenceEntryManagerFactory(persistenceConfiguration);
+        return persistenceEntryManagerFactory.createEntryManager(connectionProperties);
     }
 
 
@@ -405,5 +401,7 @@ public class ServerEntry {
         runner.start();
         Runtime.getRuntime().addShutdownHook(new ShutdownHook(runner));
     }
+
+    
     
 }

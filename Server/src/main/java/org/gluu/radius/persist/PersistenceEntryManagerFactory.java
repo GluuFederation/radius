@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
-import org.gluu.persist.couchbase.impl.CouchbaseEntryManagerFactory;
+import org.gluu.orm.couchbase.impl.CouchbaseEntryManagerFactory;
 import org.gluu.persist.exception.operation.ConfigurationException;
-import org.gluu.persist.hybrid.impl.HybridEntryManager;
-import org.gluu.persist.hybrid.impl.HybridPersistenceOperationService;
+import org.gluu.orm.hybrid.impl.HybridEntryManager;
+import org.gluu.orm.hybrid.impl.HybridPersistenceOperationService;
 import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
 import org.gluu.persist.operation.PersistenceOperationService;
 import org.gluu.persist.PersistenceEntryManager;

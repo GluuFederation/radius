@@ -7,7 +7,7 @@ import org.gluu.persist.annotation.DataEntry;
 import org.gluu.persist.annotation.ObjectClass;
 
 @DataEntry
-@ObjectClass(values={"oxAuthCustomScope","top"})
+@ObjectClass(value = "oxAuthCustomScope")
 public class AuthScope implements Serializable {
 
     private static final long serialVersionUID = -1L;
