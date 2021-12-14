@@ -10,15 +10,17 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
 import org.apache.http.impl.cookie.RFC6265CookieSpecProvider;
 import org.apache.http.protocol.HttpContext;
+import org.jboss.resteasy.client.jaxrs.engines.HttpContextProvider;
 
 
-public class HttpContextFactory {
+public class HttpContextFactory  implements HttpContextProvider{
 
-    private HttpContextFactory() {
+   
+    public HttpContextFactory() {
 
     }
 
-    public static final HttpContext newHttpContext() {
+    private static final HttpContext newHttpContext() {
 
         HttpClientContext httpClientContext = new HttpClientContext();
         configureCookieStorage(httpClientContext);
@@ -43,5 +45,11 @@ public class HttpContextFactory {
             .setCookieSpec(CookieSpecs.STANDARD)
             .build();
         httpClientContext.setRequestConfig(reqConfig);
+    }
+
+    @Override
+    public HttpContext getContext() {
+
+        return HttpContextFactory.newHttpContext();
     }
 }

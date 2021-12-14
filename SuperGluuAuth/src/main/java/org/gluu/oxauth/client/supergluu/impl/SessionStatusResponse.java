@@ -2,6 +2,8 @@ package org.gluu.oxauth.client.supergluu.impl;
 
 import java.io.Serializable;
 
+import javax.ws.rs.core.Response;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -12,7 +14,7 @@ import org.gluu.oxauth.client.supergluu.impl.model.SessionState;
 import org.gluu.oxauth.client.supergluu.impl.model.SessionCustomState;
 import static org.gluu.oxauth.client.supergluu.impl.model.SessionStatusResponseParam.*;
 
-import org.jboss.resteasy.client.ClientResponse;
+
 import org.gluu.oxauth.client.BaseResponse;
 
 
@@ -25,7 +27,7 @@ public class SessionStatusResponse extends BaseResponse implements Serializable 
     private SessionCustomState customState;
     private Integer authTime;
 
-    public SessionStatusResponse(ClientResponse<String> clientResponse) {
+    public SessionStatusResponse(Response clientResponse) {
         
         super(clientResponse);
         
