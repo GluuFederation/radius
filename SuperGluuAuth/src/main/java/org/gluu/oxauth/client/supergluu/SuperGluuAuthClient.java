@@ -8,7 +8,7 @@ import org.gluu.oxauth.client.supergluu.impl.ICryptoProviderFactory;
 import org.gluu.oxauth.client.supergluu.impl.IHttpClientFactory;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusClient;
 import org.gluu.oxauth.client.supergluu.impl.SessionStatusResponse;
-import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
+import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient43Engine;
 import org.json.JSONObject;
 import org.gluu.oxauth.client.TokenClient;
 import org.gluu.oxauth.client.TokenRequest;
@@ -183,17 +183,17 @@ public class SuperGluuAuthClient {
         return (response.isAuthenticated()?SuperGluuAuthStatus.AUTHENTICATED:SuperGluuAuthStatus.UNAUTHENTICATED);
     }
 
-    private final ApacheHttpClient4Executor createExecutor(IHttpClientFactory httpClientFactory) {
+    private final ApacheHttpClient43Engine createExecutor(IHttpClientFactory httpClientFactory) {
 
         return createExecutor(httpClientFactory,false);
     }
 
-    private final ApacheHttpClient4Executor createExecutor(IHttpClientFactory httpClientFactory,boolean createContext) {
+    private final ApacheHttpClient43Engine createExecutor(IHttpClientFactory httpClientFactory,boolean createContext) {
 
         if(createContext)
-            return new ApacheHttpClient4Executor(httpClientFactory.newHttpClient(),HttpContextFactory.newHttpContext());
+            return new ApacheHttpClient43Engine(httpClientFactory.newHttpClient(),new HttpContextFactory());
         else
-            return new ApacheHttpClient4Executor(httpClientFactory.newHttpClient());
+            return new ApacheHttpClient43Engine(httpClientFactory.newHttpClient());
     }
 
     private final TokenRequest createInitiateAuthTokenRequest(String username,String password,String userip) {
