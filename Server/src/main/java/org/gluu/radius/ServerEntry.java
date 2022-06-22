@@ -35,7 +35,7 @@ import org.gluu.radius.service.OpenIdConfigurationService;
 import org.gluu.radius.service.RadiusClientService;
 import org.gluu.radius.service.ServerConfigService;
 import org.gluu.persist.service.StandalonePersistanceFactoryService;
-
+import org.gluu.util.security.SecurityProviderUtility;
 
 public class ServerEntry {
 
@@ -292,7 +292,7 @@ public class ServerEntry {
 
     private static final boolean initSecurity() {
 
-        Security.addProvider(new BouncyCastleProvider());
+        SecurityProviderUtility.installBCProvider(true);
         return true;
     }
 
