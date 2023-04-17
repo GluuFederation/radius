@@ -5,11 +5,11 @@
 
   <modelVersion>4.0.0</modelVersion>
   <artifactId>super-gluu-radius-server</artifactId>
-  <version>4.5.0.Final</version>
+  <version>4.5.1.Final</version>
   <parent>
     <groupId>org.gluu</groupId>
     <artifactId>super-gluu-radius</artifactId>
-    <version>4.5.0.Final</version>
+    <version>4.5.1.Final</version>
   </parent>
 
   <name>Super Gluu Radius Server</name>
